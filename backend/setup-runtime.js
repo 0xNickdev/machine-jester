@@ -53,7 +53,7 @@ const GATEWAY_TOKEN = crypto.randomBytes(24).toString("hex");
 const config = {
   gateway: {
     port: parseInt(PORT),
-    bind: "0.0.0.0",
+    bind: "lan",
     mode: "local",
     auth: {
       mode: "token",
