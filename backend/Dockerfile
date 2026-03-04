@@ -1,6 +1,8 @@
-FROM node:22.14.0-alpine
+FROM node:22.14.0-slim
 
 WORKDIR /app
+
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 
 COPY package.json ./
 RUN npm install
