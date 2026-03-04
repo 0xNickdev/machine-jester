@@ -93,7 +93,6 @@ const config = {
     defaults: {
       model: {
         primary: "deepseek/deepseek-chat",
-        fallback: ["deepseek/deepseek-reasoner"]
       },
       workspace: WORKSPACE_DIR,
       contextPruning: {
