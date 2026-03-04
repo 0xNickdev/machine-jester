@@ -54,6 +54,7 @@ const config = {
   gateway: {
     port: parseInt(PORT),
     bind: "auto",
+    mode: "local",
     auth: {
       mode: "token",
       token: GATEWAY_TOKEN
