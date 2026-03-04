@@ -118,7 +118,7 @@ const config = {
         { command: "memory", description: "Show stored context" },
         { command: "dash",   description: "Live dashboard" },
         { command: "clear",  description: "Reset conversation" },
-        { command: "help",   description: "All commands" }
+        { command: "helpme",   description: "All commands" }
       ]
     }
   },
