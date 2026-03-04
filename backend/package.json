@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "description": "Machine Jester — OpenClaw Gateway",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12.0"
   },
   "scripts": {
     "start": "node setup-runtime.js && openclaw gateway --port $PORT",
