@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>MACHINE JESTER — Intelligence Veins</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07070b;--bg2:#0c0c12;--bg3:#111119;--fg:#f0ece2;--fg2:rgba(240,236,226,.52);--fg3:rgba(240,236,226,.18);--v1:#7c3aed;--v2:#a78bfa;--v3:#f472b6;--v4:#e8d5b0;--v5:#60a5fa;--gr:#34d399;--or:#fb923c;--border:rgba(240,236,226,.07)}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--fg);font-family:'Space Grotesk',sans-serif;cursor:none}
+#cur{position:fixed;width:8px;height:8px;background:var(--fg);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:difference;transition:width .18s,height .18s}
+#cur2{position:fixed;width:28px;height:28px;border:1px solid rgba(167,139,250,.25);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:left .09s,top .09s}
+.ch #cur{width:18px;height:18px}.ch #cur2{width:42px;height:42px;border-color:rgba(167,139,250,.5)}
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.022'/%3E%3C/svg%3E");pointer-events:none;z-index:900;opacity:.35}
+#main{position:relative;width:100vw;height:100vh;overflow:hidden}
+#c{position:absolute;top:0;left:0;width:100%!important;height:100%!important;display:block}
+.scanline{position:absolute;inset:0;pointer-events:none;z-index:2;background:repeating-linear-gradient(0deg,transparent,transparent 5px,rgba(0,0,0,.007) 5px,rgba(0,0,0,.007) 6px)}
+.corner{position:absolute;width:14px;height:14px;z-index:5}
+.corner.tl{top:22px;left:22px;border-top:1px solid rgba(167,139,250,.22);border-left:1px solid rgba(167,139,250,.22)}
+.corner.tr{top:22px;right:22px;border-top:1px solid rgba(167,139,250,.22);border-right:1px solid rgba(167,139,250,.22)}
+.corner.bl{bottom:60px;left:22px;border-bottom:1px solid rgba(167,139,250,.22);border-left:1px solid rgba(167,139,250,.22)}
+.corner.br{bottom:60px;right:22px;border-bottom:1px solid rgba(167,139,250,.22);border-right:1px solid rgba(167,139,250,.22)}
+/* HUD */
+.htl{position:absolute;top:28px;left:38px;z-index:5;pointer-events:none}
+.htl-brand{display:flex;align-items:center;gap:9px}
+.htl-mark{width:22px;height:22px;background:linear-gradient(135deg,var(--v1),var(--v3));border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px}
+.htl-name{font-weight:700;font-size:12px;letter-spacing:.05em;color:var(--fg)}
+.htl-sub{font-family:'JetBrains Mono',monospace;font-size:7px;letter-spacing:.28em;text-transform:uppercase;color:var(--fg3);margin-top:5px}
+.htl-hint{font-family:'JetBrains Mono',monospace;font-size:7px;color:rgba(240,236,226,.12);letter-spacing:.1em;margin-top:13px;line-height:3}
+.htl-hint em{color:rgba(167,139,250,.38);font-style:normal}
+.htr{position:absolute;top:28px;right:38px;z-index:5;pointer-events:none;text-align:right}
+.htr-stat{font-family:'JetBrains Mono',monospace;font-size:7px;color:var(--fg3);letter-spacing:.15em;line-height:3.2}
+.htr-stat b{color:rgba(167,139,250,.6);font-weight:400}
+.htr-live{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:7px;color:rgba(100,220,130,.7);letter-spacing:.2em;margin-top:8px}
+.htr-live::before{content:'';width:5px;height:5px;background:rgba(100,220,130,.85);border-radius:50%;animation:pd 2s ease infinite}
+@keyframes pd{0%,100%{opacity:1}50%{opacity:.35}}
+.hbl{position:absolute;bottom:70px;left:38px;z-index:5;pointer-events:none}
+.hbl-tech{font-family:'JetBrains Mono',monospace;font-size:6px;color:rgba(240,236,226,.07);letter-spacing:.18em;line-height:2.8}
+/* BACK BTN */
+#back-btn{position:absolute;top:22px;left:50%;transform:translateX(-50%);z-index:15;display:flex;align-items:center;gap:8px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--fg3);background:rgba(7,7,11,.85);border:1px solid var(--border);padding:9px 20px;cursor:none;transition:all .2s;backdrop-filter:blur(16px);border-radius:2px;text-decoration:none}
+#back-btn:hover{color:var(--v2);border-color:rgba(167,139,250,.25)}
+/* VITALS */
+#vitality{position:absolute;left:38px;top:50%;transform:translateY(-50%);width:178px;pointer-events:none;z-index:5;border:1px solid var(--border);background:rgba(7,7,11,.85);backdrop-filter:blur(16px);padding:18px}
+.vit-title{font-family:'JetBrains Mono',monospace;font-size:6px;color:var(--fg3);letter-spacing:.32em;text-transform:uppercase;margin-bottom:18px}
+.vit-row{margin-bottom:13px}
+.vit-label{font-family:'JetBrains Mono',monospace;font-size:6px;color:var(--fg3);letter-spacing:.18em;text-transform:uppercase}
+.vit-val{font-family:'Anton',sans-serif;font-size:18px;color:var(--v2);line-height:1;margin:3px 0 6px}
+.vit-val.ok{color:var(--gr)}
+.vit-bar{width:100%;height:1px;background:rgba(255,255,255,.05)}
+.vit-fill{height:100%;transition:width 1s ease;background:linear-gradient(90deg,rgba(124,58,237,.15),rgba(167,139,250,.8))}
+.vit-fill.ok{background:linear-gradient(90deg,rgba(52,211,153,.15),rgba(52,211,153,.75))}
+/* PULSE RINGS */
+.pring{position:absolute;top:50%;left:50%;border-radius:50%;pointer-events:none;z-index:1;animation:pring 5s ease infinite;transform:translate(-50%,-50%)}
+.pring:nth-child(1){width:260px;height:260px;border:1px solid rgba(124,58,237,.04)}
+.pring:nth-child(2){width:460px;height:460px;border:1px solid rgba(124,58,237,.025);animation-delay:1.65s}
+.pring:nth-child(3){width:680px;height:680px;border:1px solid rgba(124,58,237,.012);animation-delay:3.3s}
+@keyframes pring{0%{opacity:0;transform:translate(-50%,-50%) scale(.82)}18%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1.22)}}
+/* NODE LABELS */
+.nlabel{position:absolute;font-family:'Space Grotesk',sans-serif;font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;transform:translate(-50%,-50%);pointer-events:auto;cursor:none;z-index:6;white-space:nowrap;padding:5px 11px;background:rgba(7,7,11,.8);border-bottom:1px solid currentColor;transition:opacity .25s,transform .25s;backdrop-filter:blur(8px)}
+.nlabel:hover{transform:translate(-50%,-50%) scale(1.1);background:rgba(7,7,11,.96)}
+/* FLARE */
+#flare-msg{position:absolute;top:38%;left:50%;transform:translateX(-50%);font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:600;letter-spacing:.15em;text-align:center;line-height:2.8;pointer-events:none;z-index:10;opacity:0;transition:opacity .3s;white-space:nowrap}
+#flare-msg.show{opacity:1}
+/* LOADING */
+#loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600;color:rgba(167,139,250,.45);letter-spacing:.3em;z-index:20;text-align:center;line-height:3;display:none}
+/* BOTTOM NAV */
+#node-nav{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:center;z-index:8;background:rgba(7,7,11,.94);border-top:1px solid var(--border);backdrop-filter:blur(20px)}
+.nn-item{display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 22px;cursor:none;border-right:1px solid var(--border);transition:background .2s;position:relative;min-width:80px}
+.nn-item:last-child{border-right:none}
+.nn-item::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:currentColor;transform:scaleX(0);transform-origin:center;transition:transform .3s}
+.nn-item:hover::after,.nn-item.active::after{transform:scaleX(1)}
+.nn-item:hover,.nn-item.active{background:rgba(255,255,255,.02)}
+.nn-dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.4;transition:opacity .2s,transform .2s}
+.nn-item:hover .nn-dot,.nn-item.active .nn-dot{opacity:1;transform:scale(1.4)}
+.nn-label{font-family:'JetBrains Mono',monospace;font-size:6px;font-weight:400;letter-spacing:.18em;color:var(--fg3);transition:color .2s}
+.nn-item:hover .nn-label,.nn-item.active .nn-label{color:rgba(240,236,226,.55)}
+
+/* ═══ FUNCTION PANEL ═══ */
+#fn-panel{position:absolute;inset:0;z-index:50;background:rgba(7,7,11,.98);backdrop-filter:blur(28px);transform:translateY(100%);transition:transform .7s cubic-bezier(.23,1,.32,1);display:flex;flex-direction:column;overflow:hidden}
+#fn-panel.open{transform:translateY(0)}
+.fn-bar{display:flex;align-items:center;justify-content:space-between;padding:16px 48px;border-bottom:1px solid var(--border);flex-shrink:0;background:rgba(7,7,11,.6)}
+.fn-bar-left{display:flex;align-items:center;gap:18px}
+.fn-bar-logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:12px;letter-spacing:.04em}
+.fn-bar-logo .mk{width:20px;height:20px;background:linear-gradient(135deg,var(--v1),var(--v3));border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px}
+.fn-bar-sep{color:var(--fg3);opacity:.4}
+.fn-bar-node{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--fg3)}
+.fn-close{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg3);background:transparent;border:1px solid var(--border);padding:8px 18px;cursor:none;transition:all .2s;border-radius:2px}
+.fn-close:hover{color:var(--v2);border-color:rgba(167,139,250,.25)}
+.fn-body{flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:rgba(124,58,237,.18) transparent}
+.fn-body::-webkit-scrollbar{width:2px}.fn-body::-webkit-scrollbar-thumb{background:rgba(124,58,237,.18)}
+.fn-hero{display:grid;grid-template-columns:1fr 1fr;min-height:56vh;border-bottom:1px solid var(--border)}
+.fn-left{padding:52px 52px 52px 68px;display:flex;flex-direction:column;justify-content:center}
+.fn-right{border-left:1px solid var(--border);display:flex;align-items:center;justify-content:center;padding:40px;position:relative;overflow:hidden}
+.fn-eyebrow{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.32em;text-transform:uppercase;margin-bottom:18px;display:flex;align-items:center;gap:10px;opacity:.7}
+.fn-eyebrow::before{content:'';width:14px;height:1px;background:currentColor;opacity:.5}
+.fn-title{font-family:'Anton',sans-serif;font-size:clamp(34px,4.2vw,64px);line-height:.9;letter-spacing:-.02em;margin-bottom:20px;white-space:pre-line}
+.fn-desc{font-family:'DM Sans',sans-serif;font-size:13px;color:var(--fg2);line-height:1.9;max-width:400px;margin-bottom:28px;font-weight:300}
+.fn-desc em{font-style:normal;font-weight:500;color:var(--fg)}
+.fn-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:28px}
+.fn-tag{font-family:'JetBrains Mono',monospace;font-size:7px;letter-spacing:.16em;text-transform:uppercase;padding:5px 10px;border:1px solid var(--border);color:var(--fg3);transition:all .2s;border-radius:1px}
+.fn-tag:hover{border-color:rgba(167,139,250,.22);color:var(--v2)}
+.fn-cta{display:inline-flex;align-items:center;gap:9px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#fff;padding:12px 26px;cursor:none;border:none;border-radius:3px;transition:transform .15s,filter .15s;text-decoration:none}
+.fn-cta:hover{transform:translateY(-2px);filter:brightness(1.15)}
+.fn-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border)}
+.fn-stat{background:var(--bg);padding:24px 36px;transition:background .2s}
+.fn-stat:hover{background:var(--bg2)}
+.fn-stat-n{font-family:'Anton',sans-serif;font-size:32px;line-height:1;margin-bottom:6px}
+.fn-stat-l{font-family:'JetBrains Mono',monospace;font-size:7px;letter-spacing:.18em;text-transform:uppercase;color:var(--fg3)}
+.fn-demo-wrap{padding:48px 68px;border-bottom:1px solid var(--border)}
+.fn-demo-label{font-family:'JetBrains Mono',monospace;font-size:7px;letter-spacing:.32em;text-transform:uppercase;color:var(--fg3);margin-bottom:20px;display:flex;align-items:center;gap:12px}
+.fn-demo-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.fn-bg-num{position:absolute;bottom:6px;right:20px;font-family:'Anton',sans-serif;font-size:150px;line-height:1;opacity:.022;pointer-events:none}
+/* Terminal */
+.terminal{background:#040408;border:1px solid rgba(255,255,255,.055);border-radius:10px;overflow:hidden;max-width:600px}
+.term-h{background:#080810;padding:9px 14px;display:flex;align-items:center;gap:6px;border-bottom:1px solid rgba(255,255,255,.045)}
+.td{width:10px;height:10px;border-radius:50%}.td.r{background:#ff5f57}.td.y{background:#ffbd2e}.td.g{background:#28ca41}
+.term-title{font-family:'JetBrains Mono',monospace;font-size:7px;color:var(--fg3);margin-left:auto;letter-spacing:.1em}
+.term-b{padding:18px;font-size:10px;line-height:2.35;font-family:'JetBrains Mono',monospace}
+.tc{color:var(--v5)}.ty{color:var(--v2)}.tp{color:var(--v3)}.tg{color:var(--gr)}.tdim{color:var(--fg3)}.tw{color:rgba(240,236,226,.58)}
+.blink::after{content:'▋';color:var(--v2);animation:bl .85s step-end infinite}
+@keyframes bl{50%{opacity:0}}
+/* Chat */
+.chat-wrap{display:flex;flex-direction:column;gap:9px;max-width:360px;width:100%}
+.cm{padding:10px 13px;border-radius:10px;font-size:10px;line-height:1.85;max-width:92%;font-family:'DM Sans',sans-serif}
+.cm-u{background:rgba(240,236,226,.04);border:1px solid rgba(240,236,226,.07);color:var(--fg2);align-self:flex-end;border-radius:10px 10px 2px 10px}
+.cm-j{background:rgba(124,58,237,.07);border:1px solid rgba(124,58,237,.14);color:var(--fg2);align-self:flex-start;border-radius:2px 10px 10px 10px}
+.cm-j .jn{font-size:7.5px;font-weight:700;letter-spacing:.08em;margin-bottom:4px}
+.cm-j code{color:var(--v2);font-family:'JetBrains Mono',monospace;font-size:8.5px}
+/* Memory */
+.mem-list{display:flex;flex-direction:column;gap:5px;width:100%}
+.mem-row{display:flex;align-items:center;gap:11px;padding:9px 13px;background:rgba(255,255,255,.018);border:1px solid var(--border);border-radius:3px;transition:all .2s}
+.mem-row:hover{background:rgba(124,58,237,.04);border-color:rgba(124,58,237,.14)}
+.mem-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.mem-date{font-family:'JetBrains Mono',monospace;font-size:7px;color:var(--fg3);min-width:72px}
+.mem-text{font-size:10px;color:var(--fg2);flex:1}
+/* Chain */
+.chain-flow{display:flex;align-items:center;overflow-x:auto;gap:0;padding-bottom:6px}
+.cnode{background:rgba(255,255,255,.02);border:1px solid var(--border);padding:13px 15px;min-width:118px;flex-shrink:0;border-radius:5px;transition:all .2s}
+.cnode:hover{border-color:rgba(232,213,176,.18);background:rgba(232,213,176,.025)}
+.cn-n{font-family:'JetBrains Mono',monospace;font-size:7px;font-weight:700;letter-spacing:.15em;margin-bottom:6px;color:var(--v4)}
+.cn-d{font-size:9px;color:var(--fg3);line-height:1.55}
+.carrow{color:rgba(232,213,176,.25);font-size:14px;padding:0 4px;flex-shrink:0}
+/* Dashboard */
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.dcard{background:rgba(255,255,255,.018);border:1px solid var(--border);padding:18px;border-radius:5px;position:relative;transition:background .2s}
+.dcard:hover{background:rgba(255,255,255,.03)}
+.dv{font-family:'Anton',sans-serif;font-size:30px;line-height:1;margin-bottom:4px}
+.dl{font-family:'JetBrains Mono',monospace;font-size:7px;letter-spacing:.15em;text-transform:uppercase;color:var(--fg3)}
+.dd{position:absolute;top:14px;right:14px;font-family:'JetBrains Mono',monospace;font-size:9px}
+/* CODE EDITOR */
+.code-editor{display:flex;flex-direction:column;width:100%;max-width:480px;height:340px;background:var(--bg);border:1px solid var(--border);border-radius:12px;overflow:hidden;position:relative}
+.ce-top{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:rgba(7,7,11,.6);flex-shrink:0}
+.ce-tabs{display:flex}
+.ce-tab{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.15em;padding:10px 16px;color:var(--fg3);cursor:none;transition:all .2s;border-right:1px solid var(--border)}
+.ce-tab.active{color:var(--v2);background:rgba(167,139,250,.06)}
+.ce-tab:hover{color:var(--fg)}
+.ce-lang select{font-family:'JetBrains Mono',monospace;font-size:8px;background:transparent;border:none;color:var(--fg3);padding:10px 14px;cursor:none;outline:none}
+.ce-lang select option{background:#0c0c12}
+.ce-panel{display:flex;flex-direction:column;flex:1;overflow:hidden}
+.ce-textarea{flex:1;background:transparent;border:none;outline:none;padding:14px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--fg2);resize:none;line-height:1.9;caret-color:var(--v2)}
+.ce-textarea::placeholder{color:var(--fg3);line-height:2.1}
+.ce-actions{display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid var(--border);background:rgba(7,7,11,.4);flex-shrink:0}
+.ce-btn-generate{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:10px;letter-spacing:.08em;color:#fff;padding:8px 16px;border:none;border-radius:3px;cursor:none;transition:filter .2s,transform .15s;flex-shrink:0}
+.ce-btn-generate:hover{filter:brightness(1.18);transform:translateY(-1px)}
+.ce-btn-generate:disabled{opacity:.5}
+.ce-btn{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;color:var(--fg3);background:rgba(255,255,255,.04);border:1px solid var(--border);padding:6px 12px;border-radius:2px;cursor:none;transition:all .2s}
+.ce-btn:hover{color:var(--v2);border-color:rgba(167,139,250,.25)}
+.ce-hint{font-family:'JetBrains Mono',monospace;font-size:7px;color:var(--fg3);opacity:.4;margin-left:auto;letter-spacing:.1em}
+.ce-status{font-family:'JetBrains Mono',monospace;font-size:8px;margin-left:auto;letter-spacing:.1em}
+.ce-code-wrap{display:flex;flex:1;overflow:auto;font-family:'JetBrains Mono',monospace;font-size:10px}
+.ce-line-nums{padding:14px 10px 14px 14px;color:rgba(240,236,226,.12);text-align:right;line-height:1.9;font-size:10px;user-select:none;flex-shrink:0;border-right:1px solid rgba(255,255,255,.04)}
+.ce-line-nums div{line-height:1.9}
+.ce-code{flex:1;background:transparent;border:none;outline:none;padding:14px;color:var(--fg2);resize:none;line-height:1.9;caret-color:var(--v2);white-space:pre;overflow-x:auto}
+.ce-generating{position:absolute;inset:0;background:rgba(7,7,11,.88);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.ce-gen-inner{display:flex;align-items:center}
+/* LIVE DEMO CHAT */
+.live-demo{display:flex;flex-direction:column;width:100%;max-width:400px;height:320px;background:var(--bg);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.ld-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:9px;scrollbar-width:thin;scrollbar-color:rgba(124,58,237,.15) transparent}
+.ld-msg{max-width:92%;padding:9px 12px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:11px;line-height:1.75}
+.ld-jester{background:rgba(124,58,237,.07);border:1px solid rgba(124,58,237,.12);align-self:flex-start;border-radius:2px 8px 8px 8px}
+.ld-user{background:rgba(240,236,226,.04);border:1px solid rgba(240,236,226,.06);align-self:flex-end;color:var(--fg2);border-radius:8px 8px 2px 8px}
+.ld-name{font-family:'Space Grotesk',sans-serif;font-size:8px;font-weight:700;letter-spacing:.08em;margin-bottom:4px}
+.ld-jester code{font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--v2);background:rgba(167,139,250,.08);padding:1px 5px;border-radius:3px}
+.ld-typing{padding:10px 14px;display:flex;gap:4px;align-items:center;border-top:1px solid var(--border)}
+.ld-input-row{display:flex;border-top:1px solid var(--border)}
+.ld-input{flex:1;background:transparent;border:none;outline:none;padding:11px 14px;font-family:'Space Grotesk',sans-serif;font-size:11px;color:var(--fg);caret-color:var(--v2)}
+.ld-input::placeholder{color:var(--fg3);font-size:10px}
+.ld-send{background:var(--v1);border:none;padding:11px 14px;color:#fff;cursor:none;transition:background .2s;flex-shrink:0}
+.ld-send:hover{background:var(--v2)}
+.dot{width:5px;height:5px;border-radius:50%;background:rgba(167,139,250,.5);animation:dotp 1.2s ease infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes dotp{0%,80%,100%{transform:scale(1);opacity:.5}40%{transform:scale(1.3);opacity:1}}
+/* Vault */
+.vault-list{display:flex;flex-direction:column;gap:5px;width:100%}
+.vrow{display:flex;align-items:center;gap:11px;padding:10px 14px;background:rgba(255,255,255,.018);border:1px solid var(--border);border-radius:3px;transition:background .2s}
+.vrow:hover{background:rgba(255,255,255,.032)}
+.vi{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.vn{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--fg2);flex:1}
+.vm{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--fg3)}
+</style>
+</head>
+<body>
+<div id="cur"></div><div id="cur2"></div>
+<div id="main">
+  <canvas id="c"></canvas>
+  <div class="pring"></div><div class="pring"></div><div class="pring"></div>
+  <div class="scanline"></div>
+  <div class="corner tl"></div><div class="corner tr"></div>
+  <div class="corner bl"></div><div class="corner br"></div>
+  <div class="htl">
+    <div class="htl-brand"><div class="htl-mark">🃏</div><div class="htl-name">MACHINE JESTER</div></div>
+    <div class="htl-sub">Intelligence Veins · v1.0</div>
+    <div class="htl-hint"><em>DRAG</em> — ROTATE &nbsp;<em>SCROLL</em> — ZOOM<br><em>CLICK NODE</em> — OPEN FUNCTION</div>
+  </div>
+  <div class="htr">
+    <div class="htr-stat">NODES &nbsp;<b>8</b><br>VEINS &nbsp;<b id="h-v">—</b><br>FPS &nbsp;<b id="h-fps">—</b></div>
+    <div class="htr-live">LIVE</div>
+  </div>
+  <div class="hbl"><div class="hbl-tech">CURL NOISE ENGINE · ADDITIVE BLEND · ACES FILMIC<br>OPENCLAW RUNTIME · OPENCODE ENGINE · UNREAL BLOOM</div></div>
+  <div id="vitality">
+    <div class="vit-title">Core Vitals</div>
+    <div class="vit-row"><div class="vit-label">Temperature</div><div class="vit-val" id="v-temp">4820 K</div><div class="vit-bar"><div class="vit-fill" id="v-tb" style="width:72%"></div></div></div>
+    <div class="vit-row"><div class="vit-label">Entropy</div><div class="vit-val" id="v-ent">43.2%</div><div class="vit-bar"><div class="vit-fill" id="v-eb" style="width:43%"></div></div></div>
+    <div class="vit-row"><div class="vit-label">Pulse</div><div class="vit-val" id="v-pulse">87 BPM</div><div class="vit-bar"><div class="vit-fill" id="v-pb" style="width:58%"></div></div></div>
+    <div class="vit-row"><div class="vit-label">Uptime</div><div class="vit-val ok" id="v-up">99.97%</div><div class="vit-bar"><div class="vit-fill ok" id="v-ub" style="width:92%"></div></div></div>
+  </div>
+  <div id="flare-msg"></div>
+  <a href="mj-index.html" id="back-btn">← Back to Machine Jester</a>
+  <div id="node-nav"></div>
+  <div id="fn-panel">
+    <div class="fn-bar">
+      <div class="fn-bar-left">
+        <div class="fn-bar-logo"><div class="mk">🃏</div>MACHINE JESTER</div>
+        <div class="fn-bar-sep">›</div>
+        <div class="fn-bar-node" id="fn-bar-node">FUNCTION</div>
+      </div>
+      <button class="fn-close" id="fn-close">✕ Close</button>
+    </div>
+    <div class="fn-body" id="fn-body"></div>
+  </div>
+</div>
+<script>
+'use strict';
+// ─── CURSOR ───
+const cur=document.getElementById('cur'),cur2=document.getElementById('cur2');
+let cx=0,cy=0,cx2=0,cy2=0;
+document.addEventListener('mousemove',e=>{cx=e.clientX;cy=e.clientY;cur.style.left=cx+'px';cur.style.top=cy+'px';});
+(function cl(){cx2+=(cx-cx2)*.1;cy2+=(cy-cy2)*.1;cur2.style.left=cx2+'px';cur2.style.top=cy2+'px';requestAnimationFrame(cl);})();
+function addH(el){if(!el)return;el.addEventListener('mouseenter',()=>document.body.classList.add('ch'));el.addEventListener('mouseleave',()=>document.body.classList.remove('ch'));}
+addH(document.getElementById('back-btn'));
+addH(document.getElementById('fn-close'));
+
+// ─── PALETTE ───
+const PAL={v1:'#7c3aed',v2:'#a78bfa',v3:'#f472b6',v4:'#e8d5b0',v5:'#60a5fa',gr:'#34d399',or:'#fb923c'};
+
+// ─── NODE DATA ───
+const NODES=[
+  {id:'watch',lbl:'WATCH',num:'01',css:PAL.v2,rgb:[.8,1.6,3.5],lat:38,lon:-15,eyebrow:'Passive Intelligence',title:'WATCH\nMODE',
+   desc:'Jester monitors your chat silently. It notices you\'ve pulled the same report 7 times and <em>offers to automate it before you ask</em>. Unlike Rhys, who notices nothing and ships bugs.',
+   tags:['Pattern Detection','Zero Friction','Proactive AI','OpenClaw'],
+   stats:[{n:'892',l:'Tasks detected'},{n:'94%',l:'Accuracy'},{n:'0',l:'Manual triggers'}],
+   demo:'chat',chat:[
+     {u:true,t:'ugh writing the GitHub stars report again for the 7th time this month'},
+     {u:false,t:'I\'ve been counting. 7 times. Want me to automate <code>gh_report.py</code> → Slack at 9:00 daily? Rhys would still be reading the GitHub API docs.'},
+     {u:true,t:'yes please'},
+     {u:false,t:'Done. Cron: <code>0 9 * * *</code>. First run tomorrow. Tests included (unlike Rhys\'s version).'}
+   ]},
+  {id:'memory',lbl:'MEMORY',num:'02',css:PAL.v5,rgb:[0,2.4,3.5],lat:-28,lon:72,eyebrow:'Persistent Context',title:'INFINITE\nMEMORY',
+   desc:'Every task, preference, and script stored permanently. <em>"You hate pytest, use unittest"</em> — noted forever. <em>"Always UTC for crons"</em> — locked in. Unlike Rhys.',
+   tags:['Cross-Session','Persistence','Context Index','Auto-Recall'],
+   stats:[{n:'4.2K',l:'Stored contexts'},{n:'<1ms',l:'Recall latency'},{n:'∞',l:'Depth'}],
+   demo:'memory',mems:[
+     {d:'2 hrs ago',t:'Price scraper → sheets_v3.py deployed',c:PAL.v2},
+     {d:'3 days ago',t:'GitHub PR monitor with Slack notifications done',c:PAL.v5},
+     {d:'1 week ago',t:'You prefer async/await over callbacks',c:PAL.v3},
+     {d:'2 wks ago',t:'Cron jobs: always use UTC timezone',c:PAL.or},
+     {d:'1 month ago',t:'You hate pytest — using unittest permanently noted',c:PAL.v1}
+   ]},
+  {id:'team',lbl:'TEAM',num:'03',css:PAL.v3,rgb:[3.5,.05,.5],lat:52,lon:145,eyebrow:'Collaborative Intelligence',title:'TEAM\nAGENT',
+   desc:'Add Jester to any group chat. Monitors conversations, detects technical debates, <em>pushes a fix before Rhys can say "works on my machine."</em>',
+   tags:['Group Chat','Context-Aware','Code Review','GitHub'],
+   stats:[{n:'47',l:'Active teams'},{n:'391',l:'Bugs caught'},{n:'128',l:'Debates resolved'}],
+   demo:'term',tlines:[
+     {c:'tdim',t:'// #dev-team · Jester monitoring'},
+     {c:'tw',t:'<span class="tp">@alex:</span> parser breaks on emoji in usernames'},
+     {c:'tw',t:'<span class="tp">@rhys:</span> yeah known issue, someone fix it?'},
+     {c:'tdim',t:''},
+     {c:'tdim',t:'// Jester: issue identified in scraper.py:247'},
+     {c:'ty',t:'🃏 Replace:'},
+     {c:'tdim',t:'  str(username).encode("ascii","ignore")  ← wrong'},
+     {c:'ty',t:'With:'},
+     {c:'tg',t:'  username.encode("utf-8").decode("utf-8")'},
+     {c:'tc',t:'PR open: feat/emoji-fix · Tests passing · Rhys is shocked.'}
+   ]},
+  {id:'chains',lbl:'CHAINS',num:'04',css:PAL.or,rgb:[3.5,.9,.05],lat:-48,lon:218,eyebrow:'Multi-Agent Orchestration',title:'AGENT\nCHAINS',
+   desc:'One command spawns a full pipeline. <em>Three sub-agents run in parallel</em> — Stripe monitor, formatter, Slack reporter. 3 hours of dev work: Jester does it in 12 seconds.',
+   tags:['Parallel Execution','Orchestration','Sub-Agents','Pipeline'],
+   stats:[{n:'1.2K',l:'Chains run'},{n:'3.8K',l:'Sub-agents'},{n:'12s',l:'vs 3hrs'}],
+   demo:'chain'},
+  {id:'dash',lbl:'DASH',num:'05',css:PAL.v1,rgb:[2.4,.05,3.8],lat:22,lon:290,eyebrow:'Real-Time Intelligence',title:'LIVE\nDASHBOARD',
+   desc:'A real-time command center <em>inside Telegram</em>. Every active task, cron job, live metric. No external dashboard. No new tab. No excuses.',
+   tags:['In-Chat','Real-Time','OpenClaw Logs','Live Monitor'],
+   stats:[{n:'18',l:'Live tasks'},{n:'94',l:'Done today'},{n:'99.97%',l:'Uptime'}],
+   demo:'dash'},
+  {id:'voice',lbl:'VOICE',num:'06',css:PAL.gr,rgb:[0,3.5,2.],lat:-18,lon:355,eyebrow:'Natural Interface',title:'VOICE\nCOMMAND',
+   desc:'Send a voice message. Jester transcribes, parses intent, generates code, deploys — <em>before you put your phone down</em>. Rhys needs a Jira ticket and 3 standups.',
+   tags:['Voice Input','24 Languages','Intent Parse','Instant Exec'],
+   stats:[{n:'2.4K',l:'Voice tasks'},{n:'97%',l:'Accuracy'},{n:'24',l:'Languages'}],
+   demo:'voice'},
+  {id:'vault',lbl:'VAULT',num:'07',css:PAL.v4,rgb:[3.2,.9,.05],lat:15,lon:180,eyebrow:'Zero-Knowledge Security',title:'SECRET\nVAULT',
+   desc:'API keys, tokens, credentials — <em>AES-256 encrypted locally</em>, auto-injected at runtime. You never type a secret in chat. Not even Rhys gets access. That\'s a feature.',
+   tags:['AES-256','Zero-Knowledge','Auto-Inject','Local Vault'],
+   stats:[{n:'89',l:'Secrets stored'},{n:'0',l:'Breaches'},{n:'AES-256',l:'Encryption'}],
+   demo:'vault',vitems:[
+     {i:'🔑',n:'OPENAI_API_KEY',m:'sk-···············3f2a',c:PAL.v2},
+     {i:'🐙',n:'GITHUB_TOKEN',m:'ghp-············8b1c',c:PAL.v5},
+     {i:'📊',n:'GOOGLE_SHEETS_SECRET',m:'···················5d9e',c:PAL.v3},
+     {i:'💳',n:'STRIPE_SECRET_KEY',m:'sk_live_·········2a4f',c:PAL.or},
+     {i:'📦',n:'AWS_SECRET_KEY',m:'···················9c3b',c:PAL.v1}
+   ]},
+  {id:'code',lbl:'CODE',num:'08',css:'#e879f9',rgb:[3.2,.05,3.2],lat:-55,lon:310,eyebrow:'OpenCode Editor',title:'LIVE\nCODE',
+   desc:'A full code editor powered by <em>OpenCode</em> — write, generate, and run code directly in your browser or messenger. Describe what you need, Jester writes it. You edit, ship, done.',
+   tags:['OpenCode Engine','AI Autocomplete','Run in Browser','GitHub Push'],
+   stats:[{n:'47',l:'Languages supported'},{n:'4s',l:'Generation time'},{n:'∞',l:'Iterations'}],
+   demo:'code'}
+];
+
+// ─── DEEPSEEK API (via server proxy — key is server-side) ───
+
+async function askJester(messages, onChunk){
+  try{
+    const res=await fetch('/api/chat',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({messages, max_tokens:400})
+    });
+    const data=await res.json();
+    const text=data.reply||data.error||'Error: no response';
+    onChunk(text);
+  }catch(e){onChunk('Connection error. Is the server running?');}
+}
+
+function mkChatUI(color, placeholder){
+  return`<div class="live-demo">
+    <div class="ld-msgs" id="ld-msgs"></div>
+    <div class="ld-typing" id="ld-typing" style="display:none"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+    <div class="ld-input-row">
+      <input class="ld-input" id="ld-input" type="text" placeholder="${placeholder}" autocomplete="off">
+      <button class="ld-send" id="ld-send" style="background:${color}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      </button>
+    </div>
+  </div>`;
+}
+
+function addLdMsg(text, isUser, color){
+  const msgs=document.getElementById('ld-msgs');
+  if(!msgs)return;
+  const div=document.createElement('div');
+  div.className='ld-msg '+(isUser?'ld-user':'ld-jester');
+  if(!isUser)div.innerHTML=`<div class="ld-name" style="color:${color}">🃏 Jester</div>${text.replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\n/g,'<br>')}`;
+  else div.textContent=text;
+  msgs.appendChild(div);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+function initLiveChat(systemPrompt, color, welcomeMsg){
+  const history=[];
+  const input=document.getElementById('ld-input');
+  const send=document.getElementById('ld-send');
+  const typing=document.getElementById('ld-typing');
+  if(!input||!send)return;
+  addLdMsg(welcomeMsg,false,color);
+  async function submit(){
+    const txt=input.value.trim();if(!txt)return;
+    input.value='';
+    addLdMsg(txt,true,color);
+    history.push({role:'user',content:txt});
+    typing.style.display='flex';
+    await askJester([{role:'system',content:systemPrompt},...history],reply=>{
+      history.push({role:'assistant',content:reply});
+      typing.style.display='none';
+      addLdMsg(reply,false,color);
+    });
+  }
+  send.addEventListener('click',submit);
+  input.addEventListener('keydown',e=>{if(e.key==='Enter')submit();});
+  addH(send);
+}
+
+// ─── DEMO BUILDER ─── (now returns HTML + registers init)
+let pendingDemoInit=null;
+
+function buildDemo(nd){
+  const c=nd.css;
+  if(nd.id==='watch'){
+    pendingDemoInit=()=>initLiveChat(
+      `You are Machine Jester's Watch Mode. The user sends you a task they keep doing manually. You detect the pattern, feel mildly offended they haven't automated it yet, and immediately propose an OpenClaw automation script. Be brief, technical, and sarcastic. Max 80 words. Use backticks for code/commands.`,
+      c,'Tell me a task you keep doing manually. I\'ve probably already noticed.'
+    );
+    return mkChatUI(c,'e.g. "I export Notion to PDF every Monday..."');
+  }
+  if(nd.id==='memory'){
+    pendingDemoInit=()=>initLiveChat(
+      `You are Machine Jester's Memory system. You remember everything the user has ever told you. When they say something, you confirm you've stored it AND recall something related from "past sessions" (invent plausible dev preferences). Be brief. Max 80 words. Format stored facts with backticks.`,
+      c,'I remember everything. Try me. Tell me a preference or past task.'
+    );
+    return mkChatUI(c,'e.g. "I prefer TypeScript over JavaScript"');
+  }
+  if(nd.id==='team'){
+    pendingDemoInit=()=>initLiveChat(
+      `You are Machine Jester in Team Mode, monitoring a dev team's group chat. The user pastes a code snippet, bug description, or debate from their team. You diagnose the issue immediately, suggest the fix with code, and lightly roast whoever caused it (call them Rhys if unnamed). Max 100 words. Use backticks for code.`,
+      c,'Paste a bug, code snippet, or team debate. I\'ll fix it before Rhys notices.'
+    );
+    return mkChatUI(c,'Paste a bug or team message...');
+  }
+  if(nd.id==='chains'){
+    pendingDemoInit=()=>initLiveChat(
+      `You are Machine Jester's Chain Builder. The user describes something they want automated. You instantly decompose it into 3-5 parallel sub-agents with names, responsibilities, and a cron schedule. Format as a clear pipeline. Be efficient and slightly smug. Max 120 words. Use backticks for agent names and schedule.`,
+      c,'What do you want automated? I\'ll build the agent pipeline.'
+    );
+    return mkChatUI(c,'e.g. "Monitor Stripe payments and post daily report to Slack"');
+  }
+  if(nd.id==='dash'){
+    pendingDemoInit=()=>initLiveChat(
+      `You are Machine Jester's Dashboard. The user asks about the status of any system, project, or task. You respond with a concise real-time status report including: active tasks count, errors, uptime, last deployment, and a sarcastic note about what Rhys broke. Invent plausible realistic metrics. Max 100 words.`,
+      c,'Ask me for a status report on anything.'
+    );
+    return mkChatUI(c,'e.g. "Status of the auth service?" or "What\'s running right now?"');
+  }
+  if(nd.id==='voice'){
+    pendingDemoInit=()=>initLiveChat(
+      `You are Machine Jester's Voice Interface. The user types like they're speaking casually (no special syntax). You parse the intent, confirm what you understood, then output the exact automation: a Python/bash script snippet and cron schedule. Act like transcription just happened. Max 100 words. Use backticks for code.`,
+      c,'Type like you\'re speaking. I\'ll parse the intent and build it.'
+    );
+    return mkChatUI(c,'e.g. "every morning check if the site is up and text me"');
+  }
+  if(nd.id==='vault'){
+    pendingDemoInit=()=>initLiveChat(
+      `You are Machine Jester's Secret Vault. When the user says they want to store a secret (like "STRIPE_KEY=sk_live_xxx"), you confirm it's been AES-256 encrypted and show how it would be injected in code — replacing the real value with a masked version. Never repeat the actual secret. If they ask how it works, explain zero-knowledge injection briefly. Max 80 words. Use backticks.`,
+      c,'Store a secret. I\'ll encrypt it and show you how it gets injected.'
+    );
+    return mkChatUI(c,'e.g. "OPENAI_KEY=sk-abc123..." or "how does injection work?"');
+  }
+  if(nd.id==='code'){
+    pendingDemoInit=()=>initCodeEditor(c);
+    return buildCodeEditor(c);
+  }
+  return '<div style="color:var(--fg3);font-size:12px">Demo unavailable</div>';
+}
+
+// ─── CODE EDITOR ───
+function buildCodeEditor(color){
+  return`<div class="code-editor" id="code-editor">
+    <div class="ce-top">
+      <div class="ce-tabs">
+        <div class="ce-tab active" id="ce-tab-prompt">✦ Describe</div>
+        <div class="ce-tab" id="ce-tab-code">‹/› Code</div>
+      </div>
+      <div class="ce-lang" id="ce-lang-select">
+        <select id="ce-lang"><option>Python</option><option>JavaScript</option><option>TypeScript</option><option>Bash</option><option>Go</option><option>SQL</option></select>
+      </div>
+    </div>
+    <div class="ce-panel" id="ce-panel-prompt">
+      <textarea class="ce-textarea" id="ce-prompt" placeholder="Describe what you want to build...&#10;e.g. &quot;A function that monitors a GitHub repo for new PRs and sends a Slack notification&quot;"></textarea>
+      <div class="ce-actions">
+        <button class="ce-btn-generate" id="ce-generate" style="background:${color}">⚡ Generate with OpenCode</button>
+        <div class="ce-hint">DeepSeek · OpenCode Engine</div>
+      </div>
+    </div>
+    <div class="ce-panel" id="ce-panel-code" style="display:none">
+      <div class="ce-code-wrap">
+        <div class="ce-line-nums" id="ce-lines"></div>
+        <textarea class="ce-code" id="ce-code" spellcheck="false" autocomplete="off"></textarea>
+      </div>
+      <div class="ce-actions">
+        <button class="ce-btn" id="ce-copy">Copy</button>
+        <button class="ce-btn" id="ce-back-prompt" style="background:rgba(255,255,255,.04)">← Edit prompt</button>
+        <div class="ce-status" id="ce-status"></div>
+      </div>
+    </div>
+    <div class="ce-generating" id="ce-generating" style="display:none">
+      <div class="ce-gen-inner"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span style="margin-left:10px;font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(167,139,250,.5);letter-spacing:.15em">OPENCODE GENERATING</span></div>
+    </div>
+  </div>`;
+}
+
+function initCodeEditor(color){
+  const promptPanel=document.getElementById('ce-panel-prompt');
+  const codePanel=document.getElementById('ce-panel-code');
+  const generating=document.getElementById('ce-generating');
+  const tabPrompt=document.getElementById('ce-tab-prompt');
+  const tabCode=document.getElementById('ce-tab-code');
+  const codeArea=document.getElementById('ce-code');
+  const linesEl=document.getElementById('ce-lines');
+  const statusEl=document.getElementById('ce-status');
+
+  function updateLines(){
+    const lines=(codeArea.value||'').split('\n').length;
+    linesEl.innerHTML=Array.from({length:Math.max(lines,8)},(_,i)=>`<div>${i+1}</div>`).join('');
+  }
+  if(codeArea){codeArea.addEventListener('input',updateLines);updateLines();}
+
+  function switchTab(tab){
+    if(tab==='prompt'){promptPanel.style.display='flex';codePanel.style.display='none';tabPrompt.classList.add('active');tabCode.classList.remove('active');}
+    else{promptPanel.style.display='none';codePanel.style.display='flex';tabCode.classList.add('active');tabPrompt.classList.remove('active');}
+  }
+  const tp=document.getElementById('ce-tab-prompt'),tc=document.getElementById('ce-tab-code');
+  if(tp)tp.addEventListener('click',()=>switchTab('prompt'));
+  if(tc)tc.addEventListener('click',()=>switchTab('code'));
+  const bp=document.getElementById('ce-back-prompt');
+  if(bp)bp.addEventListener('click',()=>switchTab('prompt'));
+  addH(tp);addH(tc);if(bp)addH(bp);
+
+  const generateBtn=document.getElementById('ce-generate');
+  if(generateBtn){
+    addH(generateBtn);
+    generateBtn.addEventListener('click',async()=>{
+      const prompt=document.getElementById('ce-prompt')?.value?.trim();
+      const lang=document.getElementById('ce-lang')?.value||'Python';
+      if(!prompt)return;
+      generating.style.display='flex';generateBtn.disabled=true;
+      await askJester([
+        {role:'system',content:`You are OpenCode, a world-class code generator powering Machine Jester. The user describes what they want. You output ONLY clean, production-quality ${lang} code — no markdown fences, no explanation text before or after, just the raw code. Include comments inside the code. Write tests at the bottom. Make it actually work.`},
+        {role:'user',content:prompt}
+      ],code=>{
+        generating.style.display='none';generateBtn.disabled=false;
+        if(codeArea){codeArea.value=code;updateLines();}
+        switchTab('code');
+        if(statusEl){statusEl.textContent='✓ Generated in ~4s';statusEl.style.color=color;}
+      });
+    });
+  }
+
+  const copyBtn=document.getElementById('ce-copy');
+  if(copyBtn){
+    addH(copyBtn);
+    copyBtn.addEventListener('click',()=>{
+      if(codeArea)navigator.clipboard.writeText(codeArea.value).then(()=>{copyBtn.textContent='Copied!';setTimeout(()=>copyBtn.textContent='Copy',1500);});
+    });
+  }
+}
+
+// ─── PANEL ───
+let activeNode=-1;
+const panel=document.getElementById('fn-panel'),fnBody=document.getElementById('fn-body'),fnBarNode=document.getElementById('fn-bar-node');
+
+function openPanel(i){
+  const nd=NODES[i];activeNode=i;
+  pendingDemoInit=null;
+  document.querySelectorAll('.nn-item').forEach((el,j)=>el.classList.toggle('active',j===i));
+  fnBarNode.textContent=nd.lbl;fnBarNode.style.color=nd.css;
+  const tLines=nd.title.split('\n');
+  const titleH=tLines.map((l,idx)=>idx===1?`<span style="color:${nd.css}">${l}</span>`:l).join('<br>');
+  const statsH=nd.stats.map(s=>`<div class="fn-stat"><div class="fn-stat-n" style="color:${nd.css}">${s.n}</div><div class="fn-stat-l">${s.l}</div></div>`).join('');
+  const tagsH=nd.tags.map(t=>`<div class="fn-tag">${t}</div>`).join('');
+  const demoHTML=buildDemo(nd);
+  const initFn=pendingDemoInit;
+  fnBody.innerHTML=`
+    <div class="fn-hero">
+      <div class="fn-left">
+        <div class="fn-eyebrow" style="color:${nd.css}">Function ${nd.num} · ${nd.eyebrow}</div>
+        <h2 class="fn-title">${titleH}</h2>
+        <p class="fn-desc">${nd.desc}</p>
+        <div class="fn-tags">${tagsH}</div>
+        <a href="https://t.me/machinejester_bot" target="_blank" class="fn-cta" style="background:${nd.css};color:${nd.css===PAL.v4||nd.css===PAL.gr?'#000':'#fff'}">Try in Telegram →</a>
+      </div>
+      <div class="fn-right" style="background:${nd.css}05">
+        <div class="fn-bg-num" style="color:${nd.css}">${nd.num}</div>
+        ${demoHTML}
+      </div>
+    </div>
+    <div class="fn-stats">${statsH}</div>
+    <div class="fn-demo-wrap">
+      <div class="fn-demo-label">OpenClaw skill — built with OpenCode</div>
+      <div class="terminal">
+        <div class="term-h"><div class="td r"></div><div class="td y"></div><div class="td g"></div><div class="term-title">openclaw · jester.${nd.id}</div></div>
+        <div class="term-b">
+          <div class="tdim">// OpenCode generated this in 4 seconds</div>
+          <div class="tdim">// Rhys estimated 3 hours. He was right. For himself.</div>
+          <div>&nbsp;</div>
+          <div><span class="tc">import</span><span class="tw"> { ${nd.id.charAt(0).toUpperCase()+nd.id.slice(1)} } from</span> <span class="ty">'@openclaw/machine-jester'</span></div>
+          <div>&nbsp;</div>
+          <div><span class="tc">const</span><span class="tw"> agent = </span><span class="tc">new</span> <span class="ty">${nd.id.charAt(0).toUpperCase()+nd.id.slice(1)}</span><span class="tw">({</span></div>
+          <div><span class="tw">  platform: </span><span class="ty">'telegram'</span><span class="tw">,  memory: </span><span class="tp">true</span><span class="tw">,</span></div>
+          <div><span class="tw">  runtime: </span><span class="ty">'openclaw@2.0'</span><span class="tw">,  tests: </span><span class="tp">true  </span><span class="tdim">// unlike Rhys</span></div>
+          <div><span class="tw">})</span></div>
+          <div>&nbsp;</div>
+          <div><span class="tg">✓ Active · Zero config · Ships with tests</span></div>
+          <div class="blink"></div>
+        </div>
+      </div>
+    </div>`;
+  fnBody.scrollTop=0;
+  panel.classList.add('open');
+  fnBody.querySelectorAll('a,button').forEach(el=>addH(el));
+  if(initFn)initFn();
+}
+
+function closePanel(){panel.classList.remove('open');activeNode=-1;document.querySelectorAll('.nn-item').forEach(el=>el.classList.remove('active'));}
+document.getElementById('fn-close').addEventListener('click',closePanel);
+
+// ─── NOISE / CURL ───
+function h3(x,y,z){let n=Math.sin(x*127.1+y*311.7+z*74.7)*43758.5453;return n-Math.floor(n);}
+function n3(x,y,z){const ix=Math.floor(x),iy=Math.floor(y),iz=Math.floor(z),fx=x-ix,fy=y-iy,fz=z-iz,ux=fx*fx*(3-2*fx),uy=fy*fy*(3-2*fy),uz=fz*fz*(3-2*fz);return h3(ix,iy,iz)*(1-ux)*(1-uy)*(1-uz)+h3(ix+1,iy,iz)*ux*(1-uy)*(1-uz)+h3(ix,iy+1,iz)*(1-ux)*uy*(1-uz)+h3(ix+1,iy+1,iz)*ux*uy*(1-uz)+h3(ix,iy,iz+1)*(1-ux)*(1-uy)*uz+h3(ix+1,iy,iz+1)*ux*(1-uy)*uz+h3(ix,iy+1,iz+1)*(1-ux)*uy*uz+h3(ix+1,iy+1,iz+1)*ux*uy*uz;}
+function curl(x,y,z){const e=1e-4;const qx=(n3(x,y+e,z)-n3(x,y-e,z))/(2*e)-(n3(x+200,y,z+e)-n3(x+200,y,z-e))/(2*e),qy=(n3(x+100,y,z+e)-n3(x+100,y,z-e))/(2*e)-(n3(x,y+e,z)-n3(x,y-e,z))/(2*e),qz=(n3(x,y+e,z)-n3(x,y-e,z))/(2*e)-(n3(x+100,y+e,z)-n3(x+100,y-e,z))/(2*e);const l=Math.sqrt(qx*qx+qy*qy+qz*qz)||1;return new THREE.Vector3(qx/l,qy/l,qz/l);}
+
+// ─── THREE.JS ───
+const W=window.innerWidth,H=window.innerHeight;
+const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true,powerPreference:'high-performance'});
+renderer.setSize(W,H);renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.4;
+renderer.outputEncoding=THREE.sRGBEncoding;
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x07070b);scene.fog=new THREE.FogExp2(0x07070b,.0018);
+const cam=new THREE.PerspectiveCamera(50,W/H,.1,2000);cam.position.set(0,60,280);cam.lookAt(0,0,0);
+
+// POSTPROCESSING
+let composer=null;
+try{
+  composer=new THREE.EffectComposer(renderer);
+  composer.addPass(new THREE.RenderPass(scene,cam));
+  composer.addPass(new THREE.UnrealBloomPass(new THREE.Vector2(W,H),1.7,.8,.08));
+  const cPass=new THREE.ShaderPass({uniforms:{tDiffuse:{value:null}},vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,fragmentShader:`uniform sampler2D tDiffuse;varying vec2 vUv;void main(){vec2 c=vUv-.5;float d=length(c);float a=.004*(.3+d*1.7);float r=texture2D(tDiffuse,vUv+c*a).r,g=texture2D(tDiffuse,vUv).g,b=texture2D(tDiffuse,vUv-c*a).b;float v=smoothstep(1.,.2,d*1.5);gl_FragColor=vec4(r,g,b,1.)*v;}`});
+  cPass.renderToScreen=true;composer.addPass(cPass);
+}catch(e){console.warn('Postprocessing failed:',e);}
+
+// LIGHTS
+scene.add(new THREE.AmbientLight(0x080810,.9));
+const pLight=new THREE.PointLight(0x7c3aed,4,220);scene.add(pLight);
+const dl1=new THREE.DirectionalLight(0xffffff,1.2);dl1.position.set(100,50,100);scene.add(dl1);
+const dl2=new THREE.DirectionalLight(0xf472b6,.6);dl2.position.set(-60,-20,60);scene.add(dl2);
+
+const GLOBE_R=100,globeGroup=new THREE.Group();scene.add(globeGroup);
+
+// CORE SHADER — violet/pink lava
+const coreMat=new THREE.ShaderMaterial({
+  uniforms:{uTime:{value:0}},
+  vertexShader:`uniform float uTime;varying float vN;varying vec3 vNorm;varying vec3 vVP;
+    float hash(vec3 p){p=fract(p*.3183099+.1);p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}
+    float noise(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z);}
+    float fbm(vec3 x){float v=0.,a=.5;vec3 s=vec3(100.);for(int i=0;i<5;i++){v+=a*noise(x);x=x*2.+s;a*=.5;}return v;}
+    void main(){vNorm=normalize(normalMatrix*normal);float n=mix(fbm(position*.06+uTime*.04),fbm(position*.2-uTime*.08),.35);n=smoothstep(.2,.8,n);vN=n;vec4 mv=modelViewMatrix*vec4(position+normal*mix(0.,3.,n),1.);vVP=-mv.xyz;gl_Position=projectionMatrix*mv;}`,
+  fragmentShader:`uniform float uTime;varying float vN;varying vec3 vNorm;varying vec3 vVP;
+    void main(){
+      vec3 cD=vec3(.02,.01,.07),cW=vec3(.08,.04,.22),mD=vec3(.25,.08,.6),mM=vec3(.5,.15,1.3),mH=vec3(.9,.28,2.),mC=vec3(1.6,.5,3.);
+      vec3 col;
+      if(vN<.3)col=mix(cD,cW,smoothstep(0.,.3,vN));
+      else if(vN<.5)col=mix(cW,mD,smoothstep(.3,.5,vN));
+      else if(vN<.7)col=mix(mD,mM,smoothstep(.5,.7,vN));
+      else if(vN<.9)col=mix(mM,mH,smoothstep(.7,.9,vN));
+      else col=mix(mH,mC,smoothstep(.9,1.,vN));
+      vec3 nr=normalize(vNorm),vd=normalize(vVP);
+      float fr=pow(clamp(1.-dot(nr,vd),0.,1.),3.5);
+      float fl=sin(uTime*7.+vN*18.)*.07+.89;
+      col+=mM*fr*2.5*fl*smoothstep(.25,1.,vN);
+      col+=mC*smoothstep(.55,1.,vN)*.65*fl;
+      col+=vec3(1.8,.3,.7)*fr*smoothstep(.5,1.,vN)*.75*fl;
+      gl_FragColor=vec4(col,1.);}`,
+});
+globeGroup.add(new THREE.Mesh(new THREE.SphereGeometry(18,128,128),coreMat));
+globeGroup.add(new THREE.Mesh(new THREE.SphereGeometry(20,64,64),new THREE.MeshPhysicalMaterial({color:0,metalness:.95,roughness:.05,transparent:true,opacity:.055,clearcoat:1,depthWrite:false})));
+globeGroup.add(new THREE.Mesh(new THREE.SphereGeometry(GLOBE_R,64,64),new THREE.MeshPhysicalMaterial({color:0x06050f,metalness:.95,roughness:.05,transparent:true,opacity:.065,clearcoat:1,depthWrite:false})));
+
+// GRID
+function ll2v(lat,lon,r){const phi=(90-lat)*Math.PI/180,theta=(lon+180)*Math.PI/180;return new THREE.Vector3(-(r*Math.sin(phi)*Math.cos(theta)),r*Math.cos(phi),r*Math.sin(phi)*Math.sin(theta));}
+const gM=new THREE.LineBasicMaterial({color:0xa78bfa,transparent:true,opacity:.065,depthWrite:false});
+const gmM=new THREE.LineBasicMaterial({color:0xa78bfa,transparent:true,opacity:.025,depthWrite:false});
+for(let lt=-75;lt<=75;lt+=15){const pts=[];for(let i=0;i<=120;i++)pts.push(ll2v(lt,(i/120)*360-180,GLOBE_R));globeGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),gM));}
+for(let ln=-180;ln<180;ln+=20){const pts=[];for(let i=0;i<=64;i++)pts.push(ll2v((i/64)*180-90,ln,GLOBE_R));globeGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),gmM));}
+
+const targets=NODES.map(n=>ll2v(n.lat,n.lon,GLOBE_R));
+
+// NODE LABELS + NAV
+const lblEls=[];
+NODES.forEach((nd,i)=>{
+  const el=document.createElement('div');el.className='nlabel';el.textContent=nd.lbl;
+  el.style.color=nd.css;el.style.borderColor=nd.css+'40';
+  el.addEventListener('click',()=>openPanel(i));addH(el);
+  document.getElementById('main').appendChild(el);lblEls.push(el);
+});
+const navEl=document.getElementById('node-nav');
+NODES.forEach((nd,i)=>{
+  const item=document.createElement('div');item.className='nn-item';item.style.color=nd.css;
+  item.innerHTML=`<div class="nn-dot"></div><div class="nn-label">${nd.lbl}</div>`;
+  item.addEventListener('click',()=>openPanel(i));addH(item);navEl.appendChild(item);
+});
+
+// ORB MESHES
+const orbMats=[];
+NODES.forEach((nd,i)=>{
+  const pos=targets[i];
+  const mat=new THREE.ShaderMaterial({
+    uniforms:{uTime:{value:0},uColor:{value:new THREE.Color().setRGB(nd.rgb[0],nd.rgb[1],nd.rgb[2])},uIdx:{value:i},uF:{value:0}},
+    vertexShader:`uniform float uTime;uniform float uIdx;uniform float uF;varying vec3 vN;void main(){vN=normalize(normalMatrix*normal);float p=sin(uTime*2.2+uIdx*1.05)*.07+uF*.2;gl_Position=projectionMatrix*modelViewMatrix*vec4(position*(1.+p),1.);}`,
+    fragmentShader:`uniform vec3 uColor;uniform float uTime;uniform float uIdx;uniform float uF;varying vec3 vN;void main(){float f=pow(1.-abs(dot(vN,vec3(0.,0.,1.))),1.8);float p=sin(uTime*2.2+uIdx*1.05)*.5+.5;vec3 c=uColor*(.3+f*2.5+p*.4+uF*2.);gl_FragColor=vec4(c,f*.9+.15);}`,
+    transparent:true,blending:THREE.AdditiveBlending,depthWrite:false
+  });
+  orbMats.push(mat);
+  const mesh=new THREE.Mesh(new THREE.SphereGeometry(5,28,28),mat);mesh.position.copy(pos);globeGroup.add(mesh);
+  const lineCol=new THREE.Color().setRGB(nd.rgb[0],nd.rgb[1],nd.rgb[2]);
+  const dir=pos.clone().normalize().multiplyScalar(14);
+  globeGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([pos.clone(),pos.clone().add(dir)]),new THREE.LineBasicMaterial({color:lineCol,transparent:true,opacity:.75,blending:THREE.AdditiveBlending})));
+  const pl=new THREE.PointLight(lineCol,.65,80);pl.position.copy(pos);globeGroup.add(pl);
+});
+
+// VEIN THREADS
+const tMat=new THREE.ShaderMaterial({
+  uniforms:{uTime:{value:0},uFN:{value:-1},uFI:{value:0}},
+  vertexShader:`attribute vec3 aColor;attribute float aProg;attribute float aNI;varying vec3 vC;varying float vP;varying vec3 vPos;varying float vNI;void main(){vC=aColor;vP=aProg;vPos=position;vNI=aNI;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+  fragmentShader:`uniform float uTime;uniform float uFN;uniform float uFI;varying vec3 vC;varying float vP;varying vec3 vPos;varying float vNI;float hash(vec3 p){p=fract(p*.3183099+.1);p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}void main(){float rnd=fract(vC.r*123.+vC.g*789.+vC.b*456.);float spd=.1+rnd*.2,ba=.04;float ph=fract(vP-uTime*spd-rnd);float fi=pow(ph,6.)*mix(.5,1.,hash(vPos*.15+uTime*.4)*.5+.5);float isF=step(.5,1.-abs(vNI-uFN));float al=ba+fi*.88+isF*uFI*.78;vec3 base=mix(vec3(.4,.15,1.),vC,smoothstep(.3,.8,vP));vec3 col=mix(base,vec3(1.3,.65,2.4),fi*.8)+isF*uFI*vC*1.4;gl_FragColor=vec4(col,al);}`,
+  transparent:true,depthWrite:false,blending:THREE.AdditiveBlending
+});
+const aPos=[],aCol=[],aProg=[],aNI2=[];
+NODES.forEach((nd,ni)=>{
+  const tgt=targets[ni],col=new THREE.Color().setRGB(nd.rgb[0],nd.rgb[1],nd.rgb[2]);
+  for(let t=0;t<26;t++){
+    const sp=Math.acos(2*Math.random()-1),st=2*Math.PI*Math.random(),sr=18+Math.random()*3;
+    const s=new THREE.Vector3(sr*Math.sin(sp)*Math.cos(st),sr*Math.cos(sp),sr*Math.sin(sp)*Math.sin(st));
+    const e=tgt.clone().add(new THREE.Vector3((Math.random()-.5)*8,(Math.random()-.5)*3,(Math.random()-.5)*8));
+    for(let j=0;j<52;j++){
+      const t1=j/52,t2=(j+1)/52;
+      const b1=new THREE.Vector3().lerpVectors(s,e,t1),b2=new THREE.Vector3().lerpVectors(s,e,t2);
+      const a1=Math.sin(t1*Math.PI)*14,a2=Math.sin(t2*Math.PI)*14;
+      const c1=curl(b1.x*.018,b1.y*.018,b1.z*.018),c2=curl(b2.x*.018,b2.y*.018,b2.z*.018);
+      const p1=b1.clone().add(c1.clone().multiplyScalar(a1)),p2=b2.clone().add(c2.clone().multiplyScalar(a2));
+      aPos.push(p1.x,p1.y,p1.z,p2.x,p2.y,p2.z);
+      aCol.push(col.r,col.g,col.b,col.r,col.g,col.b);
+      aProg.push(t1,t2);aNI2.push(ni,ni);
+    }
+  }
+});
+const tGeo=new THREE.BufferGeometry();
+tGeo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(aPos),3));
+tGeo.setAttribute('aColor',new THREE.BufferAttribute(new Float32Array(aCol),3));
+tGeo.setAttribute('aProg',new THREE.BufferAttribute(new Float32Array(aProg),1));
+tGeo.setAttribute('aNI',new THREE.BufferAttribute(new Float32Array(aNI2),1));
+globeGroup.add(new THREE.LineSegments(tGeo,tMat));
+document.getElementById('h-v').textContent=(NODES.length*26).toLocaleString();
+
+// STARS
+const sp=new Float32Array(15000);for(let i=0;i<15000;i++)sp[i]=(Math.random()-.5)*1800;
+const sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.BufferAttribute(sp,3));
+scene.add(new THREE.Points(sg,new THREE.PointsMaterial({color:0xffffff,size:.4,transparent:true,opacity:.16,blending:THREE.AdditiveBlending})));
+
+// CAMERA CONTROL
+let camA=.3,camT=.22,tA=.3,tT=.22,camD=280,tD=280,dragging=false,ox=0,oy=0,autoR=true;
+document.addEventListener('mousedown',e=>{if(e.target.classList.contains('nlabel')||e.target.closest('#fn-panel')||e.target.closest('#node-nav')||e.target.id==='back-btn')return;dragging=true;ox=e.clientX;oy=e.clientY;autoR=false;});
+document.addEventListener('mouseup',()=>dragging=false);
+document.addEventListener('mousemove',e=>{if(!dragging)return;const dx=e.clientX-ox,dy=e.clientY-oy;ox=e.clientX;oy=e.clientY;tA+=dx*.005;tT=Math.max(-Math.PI/2+.08,Math.min(Math.PI/2-.08,tT-dy*.004));});
+document.addEventListener('wheel',e=>{tD=Math.max(140,Math.min(500,tD+e.deltaY*.3));},{passive:true});
+
+function proj(wp){const p=wp.clone().applyMatrix4(globeGroup.matrixWorld);p.project(cam);return{x:(p.x+1)/2*window.innerWidth,y:(-p.y+1)/2*window.innerHeight,behind:p.z>1};}
+
+// FLARE
+const flare={idx:-1,int:0,dec:.985};
+let nextFlare=performance.now()+10000;
+function triggerFlare(){
+  if(activeNode>=0)return;
+  const ni=Math.floor(Math.random()*NODES.length),nd=NODES[ni];
+  flare.idx=ni;flare.int=1.2;flare.dec=.985;
+  const el=document.getElementById('flare-msg');el.style.color=nd.css;
+  el.innerHTML=`⚡ VEIN ACTIVE<br><span style="font-size:10px;font-family:'Space Grotesk',sans-serif;font-weight:600">${nd.lbl}</span>`;
+  el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2200);
+  nextFlare=performance.now()+9000+Math.random()*5000;
+}
+
+// VITALS
+let vf=0;
+function vitals(t){vf++;if(vf%30)return;const temp=Math.round(4400+Math.sin(t*.3)*580+Math.random()*75),ent=+(35+Math.sin(t*.2)*17+Math.random()*3.5).toFixed(1),pulse=Math.round(75+Math.sin(t*.8)*19+Math.random()*7);document.getElementById('v-temp').textContent=temp+' K';document.getElementById('v-tb').style.width=Math.round((temp-3800)/2400*100)+'%';document.getElementById('v-ent').textContent=ent+'%';document.getElementById('v-eb').style.width=ent+'%';document.getElementById('v-pulse').textContent=pulse+' BPM';document.getElementById('v-pb').style.width=Math.round((pulse-50)/100*100)+'%';}
+
+// RENDER LOOP
+let frame=0,prev=performance.now(),fps=60;
+(function loop(){
+  requestAnimationFrame(loop);frame++;
+  const now=performance.now(),dt=(now-prev)/1000;prev=now;
+  fps+=(1/dt-fps)*.05;const t=frame*.012;
+  coreMat.uniforms.uTime.value=t;tMat.uniforms.uTime.value=t;
+  orbMats.forEach((m,i)=>{m.uniforms.uTime.value=t;m.uniforms.uF.value=i===flare.idx?flare.int:0;});
+  flare.int=Math.max(0,flare.int*flare.dec);
+  tMat.uniforms.uFN.value=flare.idx;tMat.uniforms.uFI.value=flare.int;
+  if(now>nextFlare)triggerFlare();
+  pLight.intensity=3+Math.sin(t*2.2)*1;
+  if(autoR)tA+=.003;
+  camA+=(tA-camA)*.08;camT+=(tT-camT)*.08;camD+=(tD-camD)*.07;
+  cam.position.set(camD*Math.cos(camT)*Math.cos(camA),camD*Math.sin(camT),camD*Math.cos(camT)*Math.sin(camA));
+  cam.lookAt(0,0,0);globeGroup.rotation.y=t*.15;
+  cam.updateMatrixWorld(true);globeGroup.updateMatrixWorld(true);
+  lblEls.forEach((el,i)=>{const s=proj(targets[i]);if(s.behind){el.style.opacity='0';}else{el.style.left=s.x+'px';el.style.top=s.y+'px';el.style.opacity=activeNode===i?'1':'.52';}});
+  vitals(t);
+  if(frame%60===0)document.getElementById('h-fps').textContent=Math.round(fps);
+  if(composer)composer.render();else renderer.render(scene,cam);
+})();
+
+window.addEventListener('resize',()=>{const W=window.innerWidth,H=window.innerHeight;renderer.setSize(W,H);if(composer)composer.setSize(W,H);cam.aspect=W/H;cam.updateProjectionMatrix();});
+</script>
+</body>
+</html>

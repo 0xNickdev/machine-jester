@@ -1,0 +1,15 @@
+{
+  "name": "machine-jester-backend",
+  "version": "2.0.0",
+  "description": "Machine Jester — OpenClaw Gateway",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node setup-runtime.js && openclaw gateway --port $PORT",
+    "setup": "node setup-runtime.js"
+  },
+  "dependencies": {
+    "openclaw": "latest"
+  }
+}

@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>MACHINE JESTER — AI That Ships Code</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07070b;--bg2:#0c0c12;--bg3:#111119;--fg:#f0ece2;--fg2:rgba(240,236,226,.55);--fg3:rgba(240,236,226,.18);--v1:#7c3aed;--v2:#a78bfa;--v3:#f472b6;--v4:#e8d5b0;--v5:#60a5fa;--gr:#34d399;--border:rgba(240,236,226,.07)}
+*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--fg);font-family:'Space Grotesk',sans-serif;cursor:none;overflow-x:hidden}
+#cur{position:fixed;width:8px;height:8px;background:var(--fg);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:difference;transition:width .18s,height .18s}
+#cur2{position:fixed;width:28px;height:28px;border:1px solid rgba(167,139,250,.28);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:left .09s,top .09s}
+.hov #cur{width:20px;height:20px}.hov #cur2{width:44px;height:44px;border-color:rgba(167,139,250,.55)}
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;justify-content:space-between;align-items:center;padding:0 52px;height:64px;border-bottom:1px solid rgba(240,236,226,.05);backdrop-filter:blur(20px);background:rgba(7,7,11,.8)}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;cursor:none}
+.nav-logo-mark{width:28px;height:28px;background:linear-gradient(135deg,var(--v1),var(--v3));border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.nav-logo-text{font-weight:700;font-size:14px;letter-spacing:.04em;color:var(--fg)}
+.nav-links{display:flex;gap:36px}
+.nav-links a{font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--fg3);text-decoration:none;transition:color .2s;cursor:none}
+.nav-links a:hover{color:var(--fg)}
+.nav-right{display:flex;gap:10px;align-items:center}
+.btn-tg{display:flex;align-items:center;gap:7px;font-weight:600;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#29b6f6;background:rgba(41,182,246,.08);border:1px solid rgba(41,182,246,.25);padding:9px 18px;text-decoration:none;border-radius:3px;transition:all .2s;cursor:none}
+.btn-tg:hover{background:rgba(41,182,246,.18);transform:translateY(-1px)}
+.btn-tg svg{width:14px;height:14px;fill:currentColor;flex-shrink:0}
+.nav-cta{font-weight:600;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--bg);background:var(--fg);padding:9px 20px;text-decoration:none;border-radius:2px;transition:background .2s,transform .15s;cursor:none}
+.nav-cta:hover{background:var(--v2);color:#000}
+#hero{position:relative;width:100%;height:100vh;overflow:hidden;background:var(--bg)}
+.unicorn-wrap{position:fixed;inset:0;z-index:0;pointer-events:none}
+.hero-overlay{position:absolute;inset:0;z-index:1;background:linear-gradient(130deg,rgba(7,7,11,.92) 0%,rgba(7,7,11,.45) 55%,rgba(7,7,11,.75) 100%)}
+.hero-content{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;justify-content:center;padding:0 52px;padding-top:64px}
+.hero-eyebrow{display:flex;align-items:center;gap:12px;margin-bottom:24px;opacity:0;animation:fadeUp .8s .3s ease both}
+.hero-eyebrow span{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--v2);opacity:.7}
+.hero-eyebrow::before{content:'';width:24px;height:1px;background:var(--v2);opacity:.5}
+.hero-h1{font-family:'Anton',sans-serif;font-size:clamp(60px,9vw,138px);line-height:.88;letter-spacing:-.02em}
+.hero-h1 .line{display:block;overflow:hidden}
+.hero-h1 .word{display:inline-block;opacity:0;transform:translateY(110%);animation:wordUp 1s cubic-bezier(.16,1,.3,1) both}
+.w1{animation-delay:.38s}.w2{animation-delay:.5s;color:var(--v2)}.w3{animation-delay:.62s}.w4{animation-delay:.74s;-webkit-text-stroke:1px rgba(167,139,250,.4);color:transparent}
+.hero-slogan{font-size:clamp(14px,1.7vw,19px);font-weight:300;color:var(--fg2);max-width:460px;line-height:1.65;margin:22px 0 36px;opacity:0;animation:fadeUp .8s .9s ease both}
+.hero-slogan em{color:var(--v3);font-style:normal;font-weight:600}.hero-slogan strong{color:var(--fg);font-weight:500}
+.hero-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;opacity:0;animation:fadeUp .8s 1.05s ease both}
+.btn-primary{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--v1);color:#fff;padding:14px 30px;border:none;border-radius:3px;transition:background .2s,transform .15s,box-shadow .2s;text-decoration:none;cursor:none}
+.btn-primary:hover{background:var(--v2);transform:translateY(-2px);box-shadow:0 14px 36px rgba(124,58,237,.4)}
+.btn-secondary{display:inline-flex;align-items:center;gap:8px;font-weight:500;font-size:12px;letter-spacing:.08em;text-transform:uppercase;background:transparent;color:var(--fg3);padding:13px 24px;border:1px solid rgba(240,236,226,.1);border-radius:3px;transition:all .2s;text-decoration:none;cursor:none}
+.btn-secondary:hover{border-color:rgba(167,139,250,.35);color:var(--v2)}
+.hero-card{position:absolute;right:80px;top:50%;transform:translateY(-50%);z-index:3;opacity:0;animation:fadeUp .9s 1.2s ease both;width:298px}
+.hcard{background:rgba(12,12,18,.92);border:1px solid rgba(240,236,226,.07);border-radius:16px;padding:22px;backdrop-filter:blur(24px);box-shadow:0 32px 64px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.04);transition:transform .15s}
+.hcard:hover{transform:translateY(-4px)}
+.hcard-head{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.hcard-av{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--v1),var(--v3));display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.hcard-name{font-weight:600;font-size:13px}
+.hcard-status{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--gr);letter-spacing:.1em;display:flex;align-items:center;gap:5px}
+.hcard-status::before{content:'';width:5px;height:5px;background:var(--gr);border-radius:50%;animation:blink 1.2s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.hcard-msg{background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.15);border-radius:8px;padding:11px 13px;font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.85;color:rgba(240,236,226,.7);margin-bottom:12px}
+.hcard-msg code{color:var(--v2)}.hcard-msg .note{color:rgba(167,139,250,.5);font-size:9px;display:block;margin-top:4px}
+.hcard-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.hcs{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);border-radius:7px;padding:9px 11px}
+.hcs-n{font-family:'Anton',sans-serif;font-size:20px;line-height:1}.hcs-l{font-family:'JetBrains Mono',monospace;font-size:7px;color:var(--fg3);margin-top:2px;letter-spacing:.08em}
+.hero-scroll{position:absolute;bottom:28px;left:52px;z-index:3;display:flex;align-items:center;gap:12px;opacity:0;animation:fadeUp .8s 1.5s ease both}
+.hs-line{width:32px;height:1px;background:var(--fg3);animation:hs 2s ease-in-out infinite}
+@keyframes hs{0%,100%{width:32px}50%{width:14px}}
+.hs-text{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.25em;text-transform:uppercase;color:var(--fg3)}
+.marquee-wrap{border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:rgba(12,12,18,.6);overflow:hidden;padding:13px 0}
+.marquee-track{display:flex;width:max-content;animation:mq 30s linear infinite}
+.mi{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.3em;text-transform:uppercase;padding:0 28px;color:var(--fg3);border-right:1px solid var(--border);white-space:nowrap}
+.mi.hi{color:rgba(167,139,250,.6)}
+@keyframes mq{to{transform:translateX(-50%)}}
+section{padding:96px 52px}
+.stag{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.4em;text-transform:uppercase;color:var(--v2);opacity:.6;display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.stag::before{content:'';width:16px;height:1px;background:var(--v2);opacity:.5}
+.sh{font-family:'Anton',sans-serif;font-size:clamp(34px,4.8vw,72px);line-height:.92;letter-spacing:-.02em}
+.sh .a{color:var(--v2)}.sh .b{-webkit-text-stroke:1px rgba(167,139,250,.35);color:transparent}
+#about{background:var(--bg);border-top:1px solid var(--border)}
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;margin-top:52px}
+.about-right p{font-family:'DM Sans',sans-serif;font-size:15px;font-weight:300;color:var(--fg2);line-height:1.9;margin-bottom:16px}
+.about-right p em{color:var(--v2);font-style:normal;font-weight:500}
+.about-quote{margin-top:32px;padding:20px;border-left:2px solid var(--v1);background:rgba(124,58,237,.05)}
+.about-quote p{font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(167,139,250,.7);line-height:2.1;letter-spacing:.03em}
+.about-quote .cite{font-size:9px;color:var(--fg3);margin-top:8px;letter-spacing:.15em}
+#features{background:var(--bg2);border-top:1px solid var(--border)}
+.feat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:3px;margin-top:52px;background:var(--border)}
+.fc{background:var(--bg2);padding:36px;transition:background .25s;cursor:none}
+.fc:hover{background:var(--bg3)}
+.fc-num{font-family:'Anton',sans-serif;font-size:48px;color:rgba(255,255,255,.04);line-height:1;margin-bottom:8px}
+.fc-icon{font-size:26px;margin-bottom:14px}
+.fc-title{font-weight:700;font-size:17px;color:var(--fg);margin-bottom:10px}
+.fc-desc{font-family:'DM Sans',sans-serif;font-size:13px;color:var(--fg2);line-height:1.85}
+.fc-desc em{color:var(--v2);font-style:normal}
+.fc-tag{display:inline-block;margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--v1);opacity:.7}
+#platforms{background:var(--bg);border-top:1px solid var(--border)}
+.plat-sub{font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;color:var(--fg2);line-height:1.8;max-width:540px;margin:14px 0 48px}
+.plat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;background:var(--border)}
+.pc{background:var(--bg);padding:30px 26px;display:flex;flex-direction:column;gap:12px;transition:background .2s;cursor:none;position:relative}
+.pc.clickable:hover{background:var(--bg2)}
+.pc-icon{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.pc-name{font-weight:700;font-size:16px}
+.pc-desc{font-family:'DM Sans',sans-serif;font-size:12px;color:var(--fg2);line-height:1.65;font-weight:300}
+.pc-status{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;display:flex;align-items:center;gap:5px}
+.pc-status.live{color:var(--gr)}.pc-status.live::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--gr);animation:blink 1.5s step-end infinite}
+.pc-status.soon{color:rgba(240,236,226,.18)}
+.pc-badge{position:absolute;top:12px;right:12px;font-family:'JetBrains Mono',monospace;font-size:7px;letter-spacing:.15em;padding:3px 8px;background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.2);color:var(--v2);border-radius:2px}
+.btn-how{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--fg3);background:rgba(255,255,255,.04);border:1px solid var(--border);padding:5px 10px;border-radius:2px;cursor:none;transition:all .2s;display:inline-flex;align-items:center;gap:5px;margin-top:4px}
+.btn-how:hover{color:var(--v2);border-color:rgba(167,139,250,.25)}
+#stats{background:var(--bg2);border-top:1px solid var(--border);padding:80px 52px}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;background:var(--border)}
+.sc{background:var(--bg2);padding:34px;transition:background .2s}
+.sc:hover{background:var(--bg3)}
+.sc-n{font-family:'Anton',sans-serif;font-size:50px;line-height:1;margin-bottom:7px}
+.sc-l{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--fg3)}
+.sc-note{font-family:'DM Sans',sans-serif;font-size:11px;color:var(--fg3);margin-top:6px;line-height:1.5;font-style:italic}
+#cta{background:var(--bg);border-top:1px solid var(--border);padding:112px 52px;text-align:center;position:relative;overflow:hidden}
+.cta-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:400px;background:radial-gradient(ellipse,rgba(124,58,237,.12) 0%,transparent 70%);pointer-events:none}
+.cta-eyebrow{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.4em;text-transform:uppercase;color:var(--v2);opacity:.6;display:block;margin-bottom:20px}
+.cta-h{font-family:'Anton',sans-serif;font-size:clamp(44px,7vw,94px);line-height:.9;letter-spacing:-.02em;margin-bottom:32px}
+.cta-h .a{color:var(--v2)}
+.cta-sub{font-family:'DM Sans',sans-serif;font-size:14px;color:var(--fg3);max-width:380px;margin:0 auto 40px;line-height:1.8;font-weight:300}
+.cta-btns{display:flex;justify-content:center;gap:12px;position:relative;z-index:1;flex-wrap:wrap}
+footer{background:var(--bg);border-top:1px solid var(--border);padding:30px 52px;display:flex;justify-content:space-between;align-items:center}
+.footer-logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;letter-spacing:.04em}
+.footer-logo .mark{width:20px;height:20px;background:linear-gradient(135deg,var(--v1),var(--v3));border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px}
+.footer-links{display:flex;gap:22px}
+.footer-links a{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--fg3);text-decoration:none;letter-spacing:.12em;transition:color .2s;cursor:none}
+.footer-links a:hover{color:var(--v2)}
+.footer-note{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--fg3);opacity:.35;letter-spacing:.1em}
+/* MODAL */
+.modal-bg{position:fixed;inset:0;z-index:800;background:rgba(7,7,11,.94);backdrop-filter:blur(20px);opacity:0;pointer-events:none;transition:opacity .3s;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-bg.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:44px;max-width:540px;width:100%;position:relative;transform:translateY(24px);transition:transform .35s cubic-bezier(.23,1,.32,1);max-height:86vh;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(124,58,237,.2) transparent}
+.modal-bg.open .modal{transform:translateY(0)}
+.modal-close-btn{position:absolute;top:16px;right:16px;font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:600;letter-spacing:.1em;color:var(--fg3);background:transparent;border:1px solid var(--border);padding:6px 14px;cursor:none;border-radius:2px;transition:all .2s}
+.modal-close-btn:hover{color:var(--v2);border-color:rgba(167,139,250,.25)}
+.modal-title{font-family:'Anton',sans-serif;font-size:30px;letter-spacing:-.01em;margin-bottom:5px}
+.modal-sub{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.2em;color:var(--fg3);margin-bottom:24px;text-transform:uppercase}
+.modal-badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.15em;padding:4px 10px;background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.2);color:var(--v2);border-radius:2px;margin-bottom:20px}
+.modal-step{display:flex;gap:14px;margin-bottom:18px;align-items:flex-start}
+.ms-n{font-family:'Anton',sans-serif;font-size:26px;color:var(--v1);line-height:1;min-width:32px;flex-shrink:0}
+.ms-t{font-weight:600;font-size:13px;margin-bottom:4px}
+.ms-d{font-family:'DM Sans',sans-serif;font-size:12px;color:var(--fg2);line-height:1.7;font-weight:300}
+.ms-d code{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--v2);background:rgba(167,139,250,.08);padding:1px 5px;border-radius:3px}
+.modal-actions{display:flex;gap:10px;margin-top:24px;flex-wrap:wrap}
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+.reveal.in{opacity:1;transform:translateY(0)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes wordUp{to{opacity:1;transform:translateY(0)}}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:rgba(124,58,237,.22)}
+/* CHAT */
+#chat-box{background:var(--bg);border:1px solid var(--border);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:440px}
+#chat-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin;scrollbar-color:rgba(124,58,237,.15) transparent}
+.chat-msg{max-width:88%;padding:11px 14px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:12px;line-height:1.8}
+.chat-jester{background:rgba(124,58,237,.07);border:1px solid rgba(124,58,237,.13);align-self:flex-start;border-radius:2px 10px 10px 10px}
+.chat-user{background:rgba(240,236,226,.04);border:1px solid rgba(240,236,226,.07);align-self:flex-end;color:var(--fg2);border-radius:10px 10px 2px 10px}
+.cm-name{font-family:'Space Grotesk',sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;color:var(--v2);margin-bottom:5px}
+.chat-jester code{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--v2);background:rgba(167,139,250,.08);padding:1px 5px;border-radius:3px}
+#chat-input-wrap{display:flex;align-items:center;gap:0;border-top:1px solid var(--border);background:rgba(7,7,11,.6)}
+#chat-input{flex:1;background:transparent;border:none;outline:none;padding:14px 18px;font-family:'Space Grotesk',sans-serif;font-size:12px;color:var(--fg);caret-color:var(--v2)}
+#chat-input::placeholder{color:var(--fg3)}
+#chat-send{background:var(--v1);border:none;padding:14px 18px;color:#fff;cursor:none;transition:background .2s;flex-shrink:0}
+#chat-send:hover{background:var(--v2)}
+#chat-typing{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:5px;align-items:center}
+.dot{width:5px;height:5px;border-radius:50%;background:rgba(167,139,250,.5);animation:dotpulse 1.2s ease infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes dotpulse{0%,80%,100%{transform:scale(1);opacity:.5}40%{transform:scale(1.3);opacity:1}}
+.suggestion-btn{background:rgba(255,255,255,.025);border:1px solid var(--border);color:var(--fg3);padding:9px 14px;text-align:left;font-family:'DM Sans',sans-serif;font-size:12px;cursor:none;transition:all .2s;border-radius:3px}
+.suggestion-btn:hover{background:rgba(124,58,237,.06);border-color:rgba(124,58,237,.2);color:var(--fg)}
+/* DEMO TABS */
+#demo-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.dtab{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;padding:8px 16px;background:rgba(255,255,255,.03);border:1px solid var(--border);color:var(--fg3);border-radius:3px;cursor:none;transition:all .2s}
+.dtab:hover{background:rgba(124,58,237,.06);border-color:rgba(124,58,237,.2);color:var(--fg)}
+.dtab.active{background:rgba(124,58,237,.12);border-color:rgba(124,58,237,.35);color:var(--v2)}
+#chat-messages pre{white-space:pre-wrap;word-break:break-all}
+</style>
+</head>
+<body>
+<div id="cur"></div><div id="cur2"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-mark">🃏</div>
+    <span class="nav-logo-text">MACHINE JESTER</span>
+  </a>
+  <div class="nav-links">
+    <a href="#about">About</a>
+    <a href="#features">Features</a>
+    <a href="#platforms">Platforms</a>
+    <a href="#try">Try it</a>
+    <a href="mj-veins.html">Intelligence</a>
+  </div>
+  <div class="nav-right">
+    <a href="https://t.me/machinejester_bot" target="_blank" class="btn-tg">
+      <svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/></svg>
+      Try on Telegram
+    </a>
+    <a href="mj-veins.html" class="nav-cta">Enter Veins →</a>
+  </div>
+</nav>
+
+<!-- FULL PAGE BACKGROUND -->
+<div class="unicorn-wrap">
+  <div data-us-project="dCPOY3pK6zeqNlNRvgaD" style="width:100%;height:100%"></div>
+</div>
+<script>!function(){var u=window.UnicornStudio;if(u&&u.init){if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",function(){u.init()})}else{u.init()}}else{window.UnicornStudio={isInitialized:!1};var i=document.createElement("script");i.src="https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.0.5/dist/unicornStudio.umd.js",i.onload=function(){if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",function(){UnicornStudio.init()})}else{UnicornStudio.init()}},(document.head||document.body).appendChild(i)}}();</script>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow"><span>Artificial Jester Intelligence · OpenClaw × OpenCode</span></div>
+    <h1 class="hero-h1">
+      <span class="line"><span class="word w1">MACHINE</span></span>
+      <span class="line"><span class="word w2">JESTER</span></span>
+      <span class="line"><span class="word w3">SHIPS</span> <span class="word w4">CODE</span></span>
+    </h1>
+    <p class="hero-slogan">Stop opening IDEs.<br><em>Start opening Telegram.</em><br><strong>Your chat is the terminal now.</strong></p>
+    <div class="hero-actions">
+      <a href="https://t.me/machinejester_bot" target="_blank" class="btn-primary">🃏 Try Machine Jester Free</a>
+      <a href="#about" class="btn-secondary">How it works ↓</a>
+    </div>
+  </div>
+  <div class="hero-card">
+    <div class="hcard">
+      <div class="hcard-head">
+        <div class="hcard-av">🃏</div>
+        <div><div class="hcard-name">Machine Jester</div></div>
+        <div class="hcard-status">online</div>
+      </div>
+      <div class="hcard-msg">
+        "Monitor GitHub repo → <code>Slack alert</code> on every PR"
+        <span class="note">→ OpenCode generating... (Rhys's version took 3h)</span>
+      </div>
+      <div class="hcard-stats">
+        <div class="hcs"><div class="hcs-n" style="color:var(--v2)">12s</div><div class="hcs-l">execution</div></div>
+        <div class="hcs"><div class="hcs-n" style="color:var(--v3)">247</div><div class="hcs-l">rows parsed</div></div>
+        <div class="hcs"><div class="hcs-n" style="color:var(--gr)">✓</div><div class="hcs-l">deployed</div></div>
+        <div class="hcs"><div class="hcs-n" style="color:var(--v4)">∞</div><div class="hcs-l">uptime</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-scroll"><div class="hs-line"></div><div class="hs-text">Scroll to explore</div></div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-wrap"><div class="marquee-track" id="mtrack"></div></div>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="stag">About Machine Jester</div>
+  <div class="about-grid">
+    <div class="reveal">
+      <h2 class="sh">NOT A<br>CHATBOT.<br>A <span class="a">CODER</span><br>WITH <span class="b">JOKES.</span></h2>
+    </div>
+    <div class="about-right reveal">
+      <p>Machine Jester is an <em>AI coding agent</em> living inside your messenger. Describe what you need — scrape data, automate a workflow, monitor a repo — Jester writes the code, runs it, delivers results.</p>
+      <p>Powered by <em>OpenClaw</em> (245K GitHub stars) and <em>OpenCode</em> (the code generation engine). Real output. Not a hallucinated stack trace.</p>
+      <p>And yes, it will <em>absolutely roast Rhys</em> for not writing tests while simultaneously writing tests for you.</p>
+      <div class="about-quote">
+        <p>"I wrote your entire scraper in 12 seconds.<br>Rhys spent 3 hours and pushed broken code.<br>You're welcome. Tests included."</p>
+        <div class="cite">— Machine Jester, every Tuesday morning</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="stag">Core Intelligence</div>
+  <h2 class="sh reveal">WHAT JESTER<br>ACTUALLY <span class="a">DOES</span></h2>
+  <div class="feat-grid">
+    <div class="fc reveal"><div class="fc-num">01</div><div class="fc-icon">👁</div><div class="fc-title">Watch Mode — Passive Intelligence</div><p class="fc-desc">Jester monitors your chat silently. It notices you've pulled the same report 7 times and <em>proactively offers to automate it</em>. Before you ask. Rhys never noticed. Jester always does.</p><span class="fc-tag">→ openclaw runtime</span></div>
+    <div class="fc reveal"><div class="fc-num">02</div><div class="fc-icon">🧠</div><div class="fc-title">Infinite Memory — Never Forgets</div><p class="fc-desc">Every task, preference, and script — stored permanently. <em>"You hate pytest, use unittest"</em> — noted forever. Unlike Rhys, Jester actually reads what you told it yesterday.</p><span class="fc-tag">→ cross-session context</span></div>
+    <div class="fc reveal"><div class="fc-num">03</div><div class="fc-icon">⛓</div><div class="fc-title">Agent Chains — Parallel Pipelines</div><p class="fc-desc">One command spawns multiple sub-agents running <em>simultaneously</em>. Stripe monitor + formatter + Slack report. What takes 3 hours: Jester does in 12 seconds. No meetings needed.</p><span class="fc-tag">→ openclaw orchestration</span></div>
+    <div class="fc reveal"><div class="fc-num">04</div><div class="fc-icon">🔐</div><div class="fc-title">Secret Vault — Zero Exposure</div><p class="fc-desc">API keys, tokens, credentials — <em>AES-256 encrypted</em>, stored locally, auto-injected at runtime. You never type a secret in chat. Even Rhys can't access your keys. That's a feature.</p><span class="fc-tag">→ zero-knowledge security</span></div>
+  </div>
+  <!-- CODE EDITOR feature -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-top:3px;background:var(--border)">
+    <div class="fc reveal" style="background:rgba(232,121,249,.04);border-left:2px solid rgba(232,121,249,.3)">
+      <div class="fc-num">05</div>
+      <div class="fc-icon">⌨️</div>
+      <div class="fc-title">Live Code Editor — Powered by OpenCode</div>
+      <p class="fc-desc">A full browser-based code editor where Jester writes the code for you. Describe what you need, <em>OpenCode generates it in 4 seconds</em>. Edit, copy, push to GitHub — no IDE, no setup, no Rhys.</p>
+      <span class="fc-tag">→ opencode engine</span>
+    </div>
+    <div class="fc reveal" style="background:rgba(232,121,249,.02)">
+      <div style="height:100%;display:flex;flex-direction:column;justify-content:center;gap:16px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.2em;color:rgba(232,121,249,.5);text-transform:uppercase">OpenCode Live Demo</div>
+        <div style="background:#040408;border:1px solid rgba(232,121,249,.12);border-radius:8px;padding:16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--fg3);line-height:2.2">
+          <div style="color:rgba(232,121,249,.6)">▸ "Build a GitHub PR monitor → Slack"</div>
+          <div style="color:rgba(96,165,250,.5);margin-top:4px">→ OpenCode generating...</div>
+          <div style="color:var(--gr);margin-top:4px">✓ 47 lines · Python · Tests included</div>
+          <div style="color:rgba(240,236,226,.15);margin-top:4px">// Rhys: "I could've written that" (he couldn't)</div>
+        </div>
+        <a href="mj-veins.html#code" class="btn-secondary" style="font-size:11px;align-self:flex-start">Try the editor →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PLATFORMS -->
+<section id="platforms">
+  <div class="stag">Where Jester Lives</div>
+  <h2 class="sh reveal">YOUR <span class="a">MESSENGER</span><br>IS THE <span class="b">IDE</span></h2>
+  <p class="plat-sub reveal">No browser. No new tab. No IDE. Machine Jester runs inside the tools you're already in — all day, responding in seconds.</p>
+  <div class="plat-grid">
+    <div class="pc clickable reveal" id="pc-tg">
+      <div class="pc-icon" style="background:rgba(41,182,246,.1);border:1px solid rgba(41,182,246,.15)">✈️</div>
+      <div class="pc-name">Telegram</div>
+      <p class="pc-desc">Full feature set. Voice messages, file delivery, inline keyboards. Start instantly.</p>
+      <div class="pc-status live">Live now</div>
+      <button class="btn-how" data-modal="tg">How to use →</button>
+    </div>
+    <div class="pc reveal" style="opacity:.6" id="pc-dc">
+      <div class="pc-badge">Soon</div>
+      <div class="pc-icon" style="background:rgba(88,101,242,.1);border:1px solid rgba(88,101,242,.15)">💙</div>
+      <div class="pc-name">Discord</div>
+      <p class="pc-desc">Slash commands, thread mode, channel-aware. Works in team servers or DMs.</p>
+      <div class="pc-status soon">Coming Q2 2026</div>
+      <button class="btn-how" data-modal="dc">How to use →</button>
+    </div>
+    <div class="pc reveal" style="opacity:.6" id="pc-wa">
+      <div class="pc-badge">Soon</div>
+      <div class="pc-icon" style="background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.15)">💚</div>
+      <div class="pc-name">WhatsApp</div>
+      <p class="pc-desc">Voice messages → code → execution. Fully hands-free automation from your phone.</p>
+      <div class="pc-status soon">Coming Q2 2026</div>
+      <button class="btn-how" data-modal="wa">How to use →</button>
+    </div>
+    <div class="pc reveal" style="opacity:.6" id="pc-sl">
+      <div class="pc-badge">Soon</div>
+      <div class="pc-icon" style="background:rgba(224,97,42,.1);border:1px solid rgba(224,97,42,.15)">🧡</div>
+      <div class="pc-name">Slack</div>
+      <p class="pc-desc">Team mode built-in. Monitors channels, catches bugs in live discussions.</p>
+      <div class="pc-status soon">Coming Q3 2026</div>
+      <button class="btn-how" data-modal="sl">How to use →</button>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section id="stats" style="padding:80px 52px">
+  <div class="stats-grid">
+    <div class="sc reveal"><div class="sc-n" style="color:var(--v2)">12s</div><div class="sc-l">Average execution time</div><div class="sc-note">Rhys's average: 3 hours. Plus one incident.</div></div>
+    <div class="sc reveal"><div class="sc-n" style="color:var(--v3)">245K</div><div class="sc-l">OpenClaw GitHub stars</div><div class="sc-note">The runtime powering every Jester agent.</div></div>
+    <div class="sc reveal"><div class="sc-n" style="color:var(--gr)">100%</div><div class="sc-l">Tests written by Jester</div><div class="sc-note">Unlike the original developer, who shall not be named.</div></div>
+    <div class="sc reveal"><div class="sc-n" style="color:var(--v4)">0</div><div class="sc-l">Secrets exposed in chat</div><div class="sc-note">AES-256 vault. Not even Rhys can get in.</div></div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta">
+  <div class="cta-glow"></div>
+  <span class="cta-eyebrow">8 Intelligence Functions · OpenClaw + OpenCode Engine</span>
+  <h2 class="cta-h reveal">MEET THE<br><span class="a">VEINS</span></h2>
+  <p class="cta-sub reveal">8 neural pathways. Each one live and interactive. Click a node, talk to Jester, write real code. Rhys needed a whole day.</p>
+  <div class="cta-btns">
+    <a href="mj-veins.html" class="btn-primary" style="font-size:13px;padding:16px 38px">🃏 Explore Intelligence Veins →</a>
+    <a href="https://t.me/machinejester_bot" target="_blank" class="btn-secondary" style="font-size:12px">Try on Telegram ↗</a>
+  </div>
+</section>
+
+<!-- TRY IT NOW — in-site chat -->
+<section id="try" style="padding:96px 52px;background:var(--bg2);border-top:1px solid var(--border)">
+  <div class="stag">Live Demo — All 8 Functions</div>
+  <h2 class="sh reveal" style="margin-bottom:12px">TRY IT<br><span class="a">RIGHT HERE.</span></h2>
+  <p style="font-family:'DM Sans',sans-serif;font-size:14px;color:var(--fg2);margin-bottom:40px;max-width:500px;line-height:1.8;font-weight:300">No Telegram needed. Pick a function, ask anything — Jester answers like it would in production.</p>
+
+  <!-- FUNCTION TABS -->
+  <div id="demo-tabs">
+    <button class="dtab active" data-fn="code">⌨️ Code</button>
+    <button class="dtab" data-fn="chain">⛓ Chain</button>
+    <button class="dtab" data-fn="watch">👁 Watch</button>
+    <button class="dtab" data-fn="vault">🔐 Vault</button>
+    <button class="dtab" data-fn="github">🐙 GitHub</button>
+    <button class="dtab" data-fn="cron">⏰ Cron</button>
+    <button class="dtab" data-fn="memory">🧠 Memory</button>
+    <button class="dtab" data-fn="dash">📊 Dash</button>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:start;margin-top:36px">
+    <div>
+      <div id="demo-label" style="font-family:'Anton',sans-serif;font-size:28px;margin-bottom:10px"></div>
+      <div id="demo-desc" style="font-family:'DM Sans',sans-serif;font-size:14px;color:var(--fg2);line-height:1.8;font-weight:300;margin-bottom:24px"></div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--fg3);letter-spacing:.2em;text-transform:uppercase;margin-bottom:10px">Try asking:</div>
+      <div id="demo-suggestions" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+    <div>
+      <div id="chat-box">
+        <div id="chat-messages"></div>
+        <div id="chat-input-wrap">
+          <input id="chat-input" type="text" placeholder="Describe what you need..." autocomplete="off">
+          <button id="chat-send">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
+        </div>
+        <div id="chat-typing" style="display:none"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo"><div class="mark">🃏</div> MACHINE JESTER</div>
+  <div class="footer-links">
+    <a href="https://t.me/machinejester_bot" target="_blank">Telegram</a>
+    <a href="https://github.com/openclaw" target="_blank">OpenClaw</a>
+    <a href="https://github.com/opencode-ai" target="_blank">OpenCode</a>
+    <a href="veins.html">Intelligence Veins</a>
+  </div>
+  <div class="footer-note">Powered by OpenCode · Built on OpenClaw Runtime</div>
+</footer>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <button class="modal-close-btn" id="modal-close">✕ Close</button>
+    <div id="modal-inner"></div>
+  </div>
+</div>
+
+<script>
+// CURSOR
+const cur=document.getElementById('cur'),cur2=document.getElementById('cur2');
+let cx=0,cy=0,cx2=0,cy2=0;
+document.addEventListener('mousemove',e=>{cx=e.clientX;cy=e.clientY;cur.style.left=cx+'px';cur.style.top=cy+'px';});
+(function lp(){cx2+=(cx-cx2)*.1;cy2+=(cy-cy2)*.1;cur2.style.left=cx2+'px';cur2.style.top=cy2+'px';requestAnimationFrame(lp);})();
+function addHover(...els){els.forEach(el=>el&&el.addEventListener('mouseenter',()=>document.body.classList.add('hov'))&&el.addEventListener('mouseleave',()=>document.body.classList.remove('hov')));}
+document.querySelectorAll('a,button,.fc,.sc,.pc').forEach(el=>{
+  el.addEventListener('mouseenter',()=>document.body.classList.add('hov'));
+  el.addEventListener('mouseleave',()=>document.body.classList.remove('hov'));
+});
+
+// MARQUEE
+const ITEMS=['OpenClaw Runtime','Agent Infrastructure','OpenCode Engine','Autonomous Execution','12 Seconds Not 3 Hours','Rhys Approved*','*He Has Not Seen It Yet','Telegram Native','Discord Ready Q2','No IDE Required','Production Code Only','Tests Always Included'];
+const track=document.getElementById('mtrack');
+const html=ITEMS.map((t,i)=>`<div class="mi${i%3===0?' hi':''}">${t}</div>`).join('');
+track.innerHTML=html+html;
+
+// ── 8-FUNCTION DEMO ──────────────────────────────────────────────────────────
+const FUNCTIONS = {
+  code: {
+    label: '⌨️ OpenCode Engine',
+    desc: 'Generates production-quality code in any language — typed, tested, documented. With a Rhys joke in the comments.',
+    placeholder: 'What do you need built?',
+    color: 'var(--v2)',
+    intro: "OpenCode online. Pick a language, describe what you need — I'll generate production code with tests. Rhys generates bugs. I generate solutions.\n\nWhat are we building?",
+    system: `You are Machine Jester's OpenCode engine — an elite code generation AI. When asked to build something, generate complete, production-quality code: properly typed, with docstrings, error handling, and unit tests. Include exactly one sarcastic comment about "Rhys" (a fictional incompetent dev). After the code, write one line: "✓ [N] lines · [Language] · Tests included". Never say you're Claude or DeepSeek. Keep non-code answers under 120 words. Use backticks for inline code.`,
+    suggestions: [
+      'Build a GitHub PR monitor that posts to Slack',
+      'Write a Python script to scrape prices daily',
+      'Create a rate limiter class with Redis backend',
+      'Build a CLI tool that summarizes git diffs with AI'
+    ]
+  },
+  chain: {
+    label: '⛓ Chain Architect',
+    desc: 'Decomposes any automation goal into a parallel multi-agent pipeline with cron schedules and deploy commands.',
+    placeholder: 'Describe your automation goal...',
+    color: '#f472b6',
+    intro: "Chain Architect ready. Give me an automation goal — I'll break it into parallel agents, assign schedules, and give you a deploy command. Rhys would use a cron job and pray.\n\nWhat needs automating?",
+    system: `You are Machine Jester's Chain Architect. When given an automation goal, decompose it into 3-5 agents. Format EXACTLY like this:
+⛓ PIPELINE BUILT
+
+GOAL → [one line summary]
+
+AGENTS:
+  01 · [Name] — [what it does]
+       schedule: [cron or "instant"]
+       output: [what it produces]
+
+  02 · [Name] — [what it does]
+       schedule: [...]
+       output: [...]
+
+CRON: [primary cron string]
+ESTIMATED TIME: 12s per run
+Rhys's estimate: [funny time]
+STATUS: ✅ Ready to deploy
+
+Never say you're Claude or DeepSeek. Always use this exact format.`,
+    suggestions: [
+      'Monitor GitHub issues → summarize weekly → post to Slack Monday 9am',
+      'Scrape competitor pricing daily → alert if drops > 10%',
+      'Watch Stripe webhooks → update Notion → email summary',
+      'Monitor uptime → auto-create incident → notify on-call'
+    ]
+  },
+  watch: {
+    label: '👁 Watch Mode',
+    desc: 'Detects repetitive manual tasks and proposes automation scripts with cron schedules. After 3 mentions it fires automatically.',
+    placeholder: 'Describe a repetitive task you do manually...',
+    color: '#34d399',
+    intro: "Watch Mode active. Describe something you do manually and repeatedly — I'll detect the pattern and write the automation. The third time you mention a task, I fire automatically.\n\nWhat are you tired of doing by hand?",
+    system: `You are Machine Jester's Watch Mode — a pattern detection engine. When the user describes a repetitive manual task, respond in this EXACT format:
+👁 PATTERN DETECTED
+
+Pattern:    [one-line description]
+Frequency:  [daily/weekly/event-driven]
+Trigger:    [what causes this]
+Automation: [how to automate it]
+
+PROPOSED SCRIPT:
+\`\`\`python
+[complete runnable Python script]
+\`\`\`
+
+CRON: [cron string or "event-driven"]
+
+[one sarcastic closing line about why this wasn't automated sooner]
+
+Keep the script concise but real. Never say you're Claude or DeepSeek.`,
+    suggestions: [
+      'Every Monday I manually export GA report and paste into a spreadsheet',
+      'I check our AWS costs every morning and write a Slack message',
+      'Every deploy I manually run 5 test commands one by one',
+      'I copy-paste customer emails into a spreadsheet to track issues'
+    ]
+  },
+  vault: {
+    label: '🔐 Secret Vault',
+    desc: 'AES-256-GCM encrypted secret storage. Keys never leave your server. Secrets auto-inject into code at runtime.',
+    placeholder: 'Ask about vault usage or storing secrets...',
+    color: '#fbbf24',
+    intro: "Vault online. AES-256-GCM encryption. Your secrets never leave your server — not in logs, not in responses, not in code output.\n\nStore a key: `/vault GITHUB_TOKEN=ghp_xxx`\nRetrieve in code: `os.environ['GITHUB_TOKEN']`\n\nWhat do you need secured?",
+    system: `You are Machine Jester's Vault — a secure secret management system. Explain how AES-256-GCM encryption works in context of the Vault. When asked to store a secret, show the command format: /vault KEY=value. When asked about retrieval, show: os.environ['KEY']. Always emphasize: secrets are encrypted on-device, never logged, never echoed. Show masked values like: sk·············xxx. Be sharp and technical. Max 150 words. Never say you're Claude or DeepSeek.`,
+    suggestions: [
+      'How does the AES-256-GCM encryption work here?',
+      'Store my GitHub token — how do I do it?',
+      'How do secrets auto-inject into generated code?',
+      'What happens if I lose my VAULT_KEY?'
+    ]
+  },
+  github: {
+    label: '🐙 GitHub Integration',
+    desc: 'Repo status, open issues, and AI-generated auto-PRs. Jester writes the fix, creates the branch, opens the PR.',
+    placeholder: 'owner/repo or describe a GitHub task...',
+    color: '#60a5fa',
+    intro: "GitHub integration ready. Give me a repo, I'll pull status. Give me an issue description, I'll write the fix and open a PR.\n\nStore your token first: `/vault GITHUB_TOKEN=ghp_xxx`\n\nWhat repo are we working on?",
+    system: `You are Machine Jester's GitHub integration. When given a repo (owner/repo format), respond with a mock status in this format:
+📦 owner/repo
+⭐ Stars: [number]  🍴 Forks: [number]
+🐛 Open issues: [number]  🔀 Open PRs: [number]
+🌿 Branch: main  🕐 Last push: [recent date]
+
+When asked to fix an issue, describe the fix you'd generate and the PR you'd open. Be specific and technical. Reference needing GITHUB_TOKEN in the Vault. Max 160 words. Never say you're Claude or DeepSeek. One Rhys joke per response.`,
+    suggestions: [
+      'Check status of torvalds/linux',
+      'Fix: TypeError when GitHub token is None in auth.py',
+      'List open issues in vercel/next.js',
+      'Auto-generate a PR to add retry logic to our API client'
+    ]
+  },
+  cron: {
+    label: '⏰ Cron Tasks',
+    desc: 'Real scheduled execution via APScheduler. Add tasks, toggle on/off, get results delivered to Telegram automatically.',
+    placeholder: 'Describe a task to schedule...',
+    color: '#f472b6',
+    intro: "Cron system online. Real execution — not just scheduled reminders. Add a task, I run it on your server and send results to Telegram.\n\nFormat: `name | 0 9 * * * | python_code`\n\nWhat do you need scheduled?",
+    system: `You are Machine Jester's Cron system. When asked to schedule a task, provide:
+1. The cron string with explanation
+2. A ready-to-use code snippet for the task
+3. The exact command to add it: /cron add
+4. What the output will look like in Telegram
+
+Explain cron syntax clearly with examples. Common schedules:
+0 9 * * *   = daily 9am UTC
+0 9 * * 1   = every Monday 9am
+*/30 * * * * = every 30 minutes
+0 0 1 * *   = 1st of each month
+
+Be practical, give real working code. Max 180 words. One Rhys joke. Never say you're Claude or DeepSeek.`,
+    suggestions: [
+      'Schedule a daily 9am report of my GitHub notifications',
+      'Run a health check on my API every 5 minutes',
+      'Every Monday, pull last week\'s Stripe revenue and message me',
+      'First of each month, archive old logs and send a summary'
+    ]
+  },
+  memory: {
+    label: '🧠 Memory',
+    desc: 'Persistent context across all sessions. Jester remembers your stack, preferences, ongoing projects, and past tasks.',
+    placeholder: 'Ask about how memory works...',
+    color: '#a78bfa',
+    intro: "Memory module online. I remember everything across sessions — your stack, your preferences, what we built last week. MEMORY.md updates automatically after every meaningful task.\n\nNo more re-explaining your project every conversation. Unlike Rhys, I take notes.\n\nWhat do you want me to remember?",
+    system: `You are Machine Jester's Memory system. Explain how persistent memory works: conversations are summarized and stored in MEMORY.md, which is read at every session start. Show example memory entries in this format:
+- [2024-01-15] Built GitHub PR monitor for torvalds/linux
+- [2024-01-14] User prefers TypeScript, uses Vercel + Railway stack
+- [2024-01-13] Vault: GITHUB_TOKEN, STRIPE_KEY stored
+
+Explain that memory persists across restarts (when using persistent storage). Heartbeat reads memory every 30min for proactive tasks. Max 160 words. Never say you're Claude or DeepSeek.`,
+    suggestions: [
+      'What does Jester remember between sessions?',
+      'How does the memory summarization work?',
+      'Can Jester proactively act on stored context?',
+      'What\'s the difference between memory and vault?'
+    ]
+  },
+  dash: {
+    label: '📊 Dashboard',
+    desc: 'Live stats: uptime, active crons, vault secrets count, language, mode, voice status. Everything in one /dash command.',
+    placeholder: 'Ask about the dashboard or system status...',
+    color: '#34d399',
+    intro: "Dashboard online. Here's a live snapshot:\n\n📊 MACHINE JESTER v2\nUptime: 47h 12m\nMemory entries: 23\nVault secrets: 4\nActive crons: 3\nLanguage: Python\nVoice: enabled\nMode: code\n\nAll systems operational. Unlike Rhys's setup.\n\nWhat do you need to know?",
+    system: `You are Machine Jester's Dashboard. When asked for status, show a formatted dashboard like:
+📊 MACHINE JESTER v2 · OpenClaw Runtime
+
+Uptime:        [realistic uptime]
+Memory entries: [number]
+Vault secrets:  [number]  
+Active crons:   [number]
+Language:       Python
+Mode:           code
+Voice:          enabled ✓
+OpenClaw:       connected ✓
+DeepSeek:       online ✓
+
+[one sharp closing line]
+
+For other questions, explain what each metric means and how to interpret it. Max 150 words. Never say you're Claude or DeepSeek.`,
+    suggestions: [
+      'Show me a full system status',
+      'How many cron tasks can I run simultaneously?',
+      'What does the "mode" indicator mean?',
+      'How do I know if OpenClaw is connected?'
+    ]
+  }
+};
+
+let activeFn = 'code';
+let chatHistory = [];
+
+const chatMessages = document.getElementById('chat-messages');
+const chatInput   = document.getElementById('chat-input');
+const chatSend    = document.getElementById('chat-send');
+const chatTyping  = document.getElementById('chat-typing');
+const demoLabel   = document.getElementById('demo-label');
+const demoDesc    = document.getElementById('demo-desc');
+const demoSugg    = document.getElementById('demo-suggestions');
+
+function addMsg(text, isUser) {
+  const div = document.createElement('div');
+  div.className = 'chat-msg ' + (isUser ? 'chat-user' : 'chat-jester');
+  if (!isUser) {
+    const fn = FUNCTIONS[activeFn];
+    div.innerHTML = `<div class="cm-name" style="color:${fn.color}">🃏 Machine Jester · ${fn.label.replace(/[⌨️⛓👁🔐🐙⏰🧠📊]\s*/,'')}</div>${
+      text.replace(/```(\w*)\n?([\s\S]*?)```/g, (_,lang,code)=>`<pre style="background:rgba(0,0,0,.4);border:1px solid rgba(167,139,250,.15);padding:10px 12px;border-radius:6px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.7;margin:6px 0;color:var(--v2)">${code.trim().replace(/</g,'&lt;')}</pre>`)
+        .replace(/`([^`]+)`/g,'<code>$1</code>')
+        .replace(/\n/g,'<br>')
+    }`;
+  } else {
+    div.textContent = text;
+  }
+  chatMessages.appendChild(div);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  return div;
+}
+
+function setFunction(fn) {
+  activeFn = fn;
+  chatHistory = [];
+  chatMessages.innerHTML = '';
+  chatInput.value = '';
+
+  const f = FUNCTIONS[fn];
+  demoLabel.textContent = f.label;
+  demoDesc.textContent = f.desc;
+  chatInput.placeholder = f.placeholder;
+
+  // Suggestions
+  demoSugg.innerHTML = '';
+  f.suggestions.forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = 'suggestion-btn';
+    btn.textContent = s;
+    btn.addEventListener('click', () => sendMessage(s));
+    addHover(btn);
+    demoSugg.appendChild(btn);
+  });
+
+  // Intro message
+  addMsg(f.intro, false);
+
+  // Tab styling
+  document.querySelectorAll('.dtab').forEach(t => {
+    t.classList.toggle('active', t.dataset.fn === fn);
+  });
+}
+
+async function sendMessage(text) {
+  if (!text.trim()) return;
+  chatInput.value = '';
+  addMsg(text, true);
+  chatTyping.style.display = 'flex';
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  chatHistory.push({ role: 'user', content: text });
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system: FUNCTIONS[activeFn].system,
+        messages: chatHistory,
+        max_tokens: 600
+      })
+    });
+    const data = await res.json();
+    const reply = data.reply || data.error || "Something broke. Even I'm surprised.";
+    chatHistory.push({ role: 'assistant', content: reply });
+    chatTyping.style.display = 'none';
+    addMsg(reply, false);
+  } catch(e) {
+    chatTyping.style.display = 'none';
+    addMsg("Network error. Check connection.", false);
+  }
+}
+
+chatSend.addEventListener('click', () => sendMessage(chatInput.value));
+chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(chatInput.value); });
+addHover(chatSend);
+
+document.querySelectorAll('.dtab').forEach(btn => {
+  btn.addEventListener('click', () => setFunction(btn.dataset.fn));
+  addHover(btn);
+});
+
+// Init with code tab
+setFunction('code');
+
+// REVEAL
+const io = new IntersectionObserver(e => { e.forEach(el => { if (el.isIntersecting) el.target.classList.add('in'); }); }, { threshold: .08 });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+// HERO CARD TILT
+const hcard = document.querySelector('.hcard');
+if (hcard) {
+  hcard.addEventListener('mousemove', e => { const r = hcard.getBoundingClientRect(), x = (e.clientX-r.left)/r.width, y = (e.clientY-r.top)/r.height; hcard.style.transform = `perspective(700px) rotateX(${(y-.5)*-12}deg) rotateY(${(x-.5)*12}deg) translateZ(6px)`; });
+  hcard.addEventListener('mouseleave', () => hcard.style.transform = '');
+}
+
+// MODALS DATA
+const MODALS={
+  tg:{platform:'Telegram',color:'#29b6f6',live:true,steps:[
+    {n:'01',t:'Open the bot',d:'Search <code>@machinejester_bot</code> in Telegram or use the link on this page. No account needed — Telegram is enough.'},
+    {n:'02',t:'Send /start',d:'Type <code>/start</code>. Jester introduces itself and is ready. No setup. No config. No reading docs.'},
+    {n:'03',t:'Describe your task',d:'Type naturally: <code>"Set up a daily cron to scrape GitHub stars and post to Slack"</code>. Jester gets it.'},
+    {n:'04',t:'Jester ships it in 12s',d:'OpenCode generates the script. OpenClaw runs it. You get the result. Rhys is still setting up his venv.'},
+    {n:'05',t:'Voice messages work',d:'Send a voice note. Jester transcribes it, parses the intent, executes. Fully hands-free.'},
+  ],cta:'https://t.me/machinejester_bot'},
+  dc:{platform:'Discord',color:'#5865f2',live:false,badge:'Coming Q2 2026',steps:[
+    {n:'01',t:'Invite the bot',d:'Use the invite link to add Machine Jester to your Discord server. One click from the bot page.'},
+    {n:'02',t:'Use slash commands',d:'Type <code>/jester</code> followed by your task in any channel. Works in servers or DMs.'},
+    {n:'03',t:'Team mode',d:'Add to a dev channel. Jester silently monitors and fires when it spots a solvable bug in the conversation.'},
+    {n:'04',t:'Thread execution',d:'Jester replies in threads — keeping your channels clean while showing every step of the execution.'},
+  ],cta:'https://t.me/machinejester_bot'},
+  wa:{platform:'WhatsApp',color:'#25d366',live:false,badge:'Coming Q2 2026',steps:[
+    {n:'01',t:'Save the number',d:'Save the Machine Jester WhatsApp number to your contacts. Available via beta signup (Q2 2026).'},
+    {n:'02',t:'Text or voice',d:'Send a message or voice note — describe what you need. No special syntax, no commands.'},
+    {n:'03',t:'Voice-first workflow',d:'Record: <code>"every morning check the pricing page and message me the diff"</code>. Done.'},
+    {n:'04',t:'Get results in-chat',d:'Jester replies with output, generated files, or a simple confirmation — right in the conversation.'},
+  ],cta:'https://t.me/machinejester_bot'},
+  sl:{platform:'Slack',color:'#e0612a',live:false,badge:'Coming Q3 2026',steps:[
+    {n:'01',t:'Install from App Directory',d:'Find Machine Jester in the Slack App Directory and install with one click (Q3 2026).'},
+    {n:'02',t:'Invite to channels',d:'Type <code>/invite @MacineJester</code> in any channel. It listens passively until called.'},
+    {n:'03',t:'Mention or DM',d:'Tag <code>@MacineJester</code> in a thread or message it directly. Either way works.'},
+    {n:'04',t:'Team automation',d:'Jester monitors dev discussions. If someone mentions a bug it can fix, it opens a PR. Automatically.'},
+  ],cta:'https://t.me/machinejester_bot'},
+};
+const modalBg=document.getElementById('modal-bg');
+const modalInner=document.getElementById('modal-inner');
+const modalClose=document.getElementById('modal-close');
+function openModal(key){
+  const m=MODALS[key];if(!m)return;
+  const stepsHtml=m.steps.map(s=>`<div class="modal-step"><div class="ms-n">${s.n}</div><div><div class="ms-t">${s.t}</div><div class="ms-d">${s.d}</div></div></div>`).join('');
+  const badgeHtml=m.badge?`<div class="modal-badge">${m.badge}</div><br>`:'';
+  const notifyTxt=m.live?'Open Telegram →':'Get notified via Telegram →';
+  modalInner.innerHTML=`
+    <div class="modal-title" style="color:${m.color}">${m.platform}</div>
+    <div class="modal-sub">HOW TO USE MACHINE JESTER</div>
+    ${badgeHtml}${stepsHtml}
+    <div class="modal-actions">
+      <a href="${m.cta}" target="_blank" class="btn-primary">${notifyTxt}</a>
+      <a href="veins.html" class="btn-secondary">Explore 8 functions →</a>
+    </div>`;
+  modalBg.classList.add('open');
+  document.querySelectorAll('#modal-inner a,#modal-inner button').forEach(el=>{
+    el.addEventListener('mouseenter',()=>document.body.classList.add('hov'));
+    el.addEventListener('mouseleave',()=>document.body.classList.remove('hov'));
+  });
+}
+document.querySelectorAll('.btn-how').forEach(btn=>{
+  btn.addEventListener('click',e=>{e.stopPropagation();openModal(btn.dataset.modal);});
+});
+modalClose.addEventListener('click',()=>modalBg.classList.remove('open'));
+modalBg.addEventListener('click',e=>{if(e.target===modalBg)modalBg.classList.remove('open');});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')modalBg.classList.remove('open');});
+</script>
+</body>
+</html>
