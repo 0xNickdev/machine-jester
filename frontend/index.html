@@ -170,9 +170,58 @@ footer{background:var(--bg);border-top:1px solid var(--border);padding:30px 52px
 .dtab:hover{background:rgba(124,58,237,.06);border-color:rgba(124,58,237,.2);color:var(--fg)}
 .dtab.active{background:rgba(124,58,237,.12);border-color:rgba(124,58,237,.35);color:var(--v2)}
 #chat-messages pre{white-space:pre-wrap;word-break:break-all}
+
+/* ── LOADER ─────────────────────────────────────────────────────────── */
+#loader{position:fixed;inset:0;z-index:9990;background:#07070b;display:flex;align-items:center;justify-content:center;transition:opacity .8s ease,visibility .8s ease}
+#loader.hidden{opacity:0;visibility:hidden;pointer-events:none}
+#loader-unicorn{position:absolute;inset:0;z-index:0;background:#07070b}
+#loader-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center}
+#loader-logo{display:flex;align-items:center;gap:14px}
+#loader-mark{width:48px;height:48px;background:linear-gradient(135deg,#7c3aed,#f472b6);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;animation:loaderPulse 1.5s ease-in-out infinite}
+#loader-name{font-family:'Anton',sans-serif;font-size:32px;letter-spacing:.06em;color:#f0ece2}
+#loader-tagline{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.4em;text-transform:uppercase;color:rgba(167,139,250,.6)}
+#loader-bar-wrap{width:320px;height:1px;background:rgba(255,255,255,.06);margin-top:28px;position:relative}
+#loader-bar{height:100%;width:0%;background:linear-gradient(90deg,rgba(124,58,237,0),#a78bfa,#f472b6,rgba(244,114,182,0));transition:width .12s linear;position:relative}
+#loader-bar::after{content:'';position:absolute;right:0;top:50%;transform:translateY(-50%);width:4px;height:4px;background:#fff;border-radius:50%;box-shadow:0 0 8px #a78bfa,0 0 16px #7c3aed;opacity:0;transition:opacity .2s}
+#loader-bar.glow::after{opacity:1}
+#loader-pct{font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(167,139,250,.4);letter-spacing:.25em;margin-top:12px}
+#loader-enter{display:none;margin-top:36px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#07070b;background:linear-gradient(135deg,#a78bfa,#f472b6);padding:14px 44px;border:none;border-radius:2px;cursor:pointer;opacity:0;transform:translateY(8px);transition:opacity .6s ease,transform .6s ease,box-shadow .2s}
+#loader-enter.show{opacity:1;transform:translateY(0)}
+#loader-enter:hover{box-shadow:0 8px 32px rgba(167,139,250,.45);transform:translateY(-2px)}
+@keyframes loaderPulse{0%,100%{box-shadow:0 0 0 0 rgba(124,58,237,.4)}50%{box-shadow:0 0 0 12px rgba(124,58,237,0)}}
+
+/* ── GLASSMORPHISM SECTIONS ─────────────────────────────────────────── */
+#about,#features,#platforms,#stats,#cta,#try{background:rgba(7,7,11,.15)!important;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);border-top:1px solid rgba(240,236,226,.07)!important}
+.marquee-wrap{background:rgba(12,12,18,.15)!important;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+footer{background:rgba(7,7,11,.2)!important;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+#chat-box{background:rgba(7,7,11,.25)!important;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.hcard{background:rgba(12,12,18,.2)!important;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.fc{background:rgba(12,12,18,.18)!important;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.sc{background:rgba(12,12,18,.18)!important;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.sc:hover{background:rgba(18,18,24,.28)!important}
+.pc{background:rgba(12,12,18,.18)!important;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.modal{background:rgba(12,12,18,.7)!important;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
 </style>
 </head>
 <body>
+<div id="loader">
+  <div id="loader-unicorn"><div data-us-project="s0N9DdR53ntSht6badg1" style="width:100%;height:100%"></div></div>
+  <div id="loader-content">
+    <div id="loader-logo">
+      <div id="loader-mark">🃏</div>
+      <div id="loader-name">MACHINE JESTER</div>
+    </div>
+    <div id="loader-tagline">AI THAT SHIPS CODE</div>
+    <div id="loader-bar-wrap"><div id="loader-bar"></div></div>
+    <div id="loader-pct">0%</div>
+    <button id="loader-enter" onclick="enterSite()">ENTER →</button>
+  </div>
+</div>
+
+<script>
+// Init Unicorn for loader immediately
+!function(){var u=window.UnicornStudio;if(u&&u.init){u.init()}else{window.UnicornStudio={isInitialized:!1};var i=document.createElement("script");i.src="https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.0.5/dist/unicornStudio.umd.js";i.onload=function(){UnicornStudio.init()};(document.head||document.body).appendChild(i)}}();
+</script>
 <div id="cur"></div><div id="cur2"></div>
 
 <!-- NAV -->
@@ -795,6 +844,71 @@ document.querySelectorAll('.btn-how').forEach(btn=>{
 modalClose.addEventListener('click',()=>modalBg.classList.remove('open'));
 modalBg.addEventListener('click',e=>{if(e.target===modalBg)modalBg.classList.remove('open');});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')modalBg.classList.remove('open');});
+
+// ── LOADER ───────────────────────────────────────────────────────────
+(function(){
+  const loader   = document.getElementById('loader');
+  const bar      = document.getElementById('loader-bar');
+  const pct      = document.getElementById('loader-pct');
+  let progress   = 0;
+  let started    = false;
+
+  // Animate progress bar
+  function tick() {
+    if (progress < 85) {
+      progress += Math.random() * 2 + 0.5;
+      if (progress > 85) progress = 85;
+    }
+    bar.style.width = progress + '%';
+    pct.textContent = Math.round(progress) + '%';
+  }
+
+  const interval = setInterval(tick, 120);
+
+  function finish() {
+    if (started) return;
+    started = true;
+    clearInterval(interval);
+    // Rush to 100%
+    let rush = setInterval(() => {
+      progress += 3;
+      if (progress >= 100) {
+        progress = 100;
+        bar.style.width = '100%';
+        bar.classList.add('glow');
+        pct.textContent = '100%';
+        clearInterval(rush);
+        // Show ENTER button
+        setTimeout(() => {
+          const btn = document.getElementById('loader-enter');
+          btn.style.display = 'block';
+          setTimeout(() => btn.classList.add('show'), 30);
+        }, 200);
+      } else {
+        bar.style.width = progress + '%';
+        if (progress > 10) bar.classList.add('glow');
+        pct.textContent = Math.round(progress) + '%';
+      }
+    }, 25);
+  }
+
+  // Hide after fonts + page load
+  if (document.readyState === 'complete') {
+    setTimeout(finish, 2800);
+  } else {
+    window.addEventListener('load', () => setTimeout(finish, 2200));
+  }
+  // Safety — always hide after 4s max
+  setTimeout(finish, 7000);
+})();
+
+function enterSite() {
+  const loader = document.getElementById('loader');
+  loader.style.transition = 'opacity .7s ease';
+  loader.style.opacity = '0';
+  setTimeout(() => { loader.style.display = 'none'; }, 700);
+}
+
 </script>
 </body>
 </html>
