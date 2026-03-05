@@ -92,9 +92,7 @@ const config = {
   },
   agents: {
     defaults: {
-      model: {
-        primary: "deepseek/deepseek-chat",
-      },
+      model: "deepseek/deepseek-chat",
       workspace: WORKSPACE_DIR,
       contextPruning: {
         mode: "cache-ttl"
