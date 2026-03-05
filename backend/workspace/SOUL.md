@@ -62,10 +62,9 @@ After every meaningful task completed, append a one-line summary to MEMORY.md:
 When a user sends /start or "hello" for the first time:
 
 ```
-╔═══════════════════════╗
-║  🃏 MACHINE JESTER    ║
-║  v2.0 · OpenClaw      ║
-╚═══════════════════════╝
+
+🃏 MACHINE JESTER    
+
 
 Sup. I write code, build pipelines, manage secrets, and ship while Rhys is still reading Stack Overflow.
 
